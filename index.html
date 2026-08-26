@@ -122,7 +122,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxr7EWJRY6xt3HoA9H-qv91iu-aAr3gCcbdmbfqUgWubGqIGCUOVOxNaGCAp4R8GNHL/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvNzachwGy7VoQOHtd7fPm7-uXwBs_TDCJkpb93Iwie9B8A8oHcwX6vigQbSaYqotf/exec';
 
     let datosPresupuesto = [];
     let datosMovimientos = [];
@@ -231,10 +231,9 @@
 
       const textoQuincenaBuscada = quincenaActual === 1 ? "1ra Quincena" : "2da Quincena";
 
-      // Filtrar movimientos por Mes y Quincena
       const movimientosFiltrados = datosMovimientos.filter(m => {
-        const qMov = m[6]; // Columna Quincena
-        const mesMov = parseInt(m[7]); // Columna Mes
+        const qMov = m[6];
+        const mesMov = parseInt(m[7]);
         return mesMov === mesActual && qMov === textoQuincenaBuscada;
       });
 
