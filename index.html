@@ -2,248 +2,243 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mi Presupuesto V2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Gastos & Presupuesto</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-12 font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen pb-12 font-sans antialiased">
 
-  <div class="max-w-md mx-auto space-y-5">
-    <!-- Encabezado -->
-    <header class="text-center py-1">
-      <div class="flex justify-center items-center gap-2">
-        <h1 class="text-2xl font-bold text-emerald-400">📊 Control Financiero</h1>
-        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full">V2</span>
+  <div class="max-w-md mx-auto p-4 space-y-6">
+
+    <!-- ENCABEZADO -->
+    <header class="flex justify-between items-center bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-xl">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white">Mi Presupuesto</h1>
+        <p class="text-xs text-slate-400" id="lblQuincenaInfo">Cargando fecha...</p>
       </div>
-      <p class="text-xs text-slate-400 mt-0.5">Sincronizado con Google Sheets</p>
+      <button onclick="cargarDatos()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-lg active:scale-95">
+        <i class="fa-solid fa-rotate text-sm" id="iconReload"></i>
+      </button>
     </header>
 
-    <!-- Resumen por Cuentas / Tarjetas -->
-    <div class="grid grid-cols-2 gap-2" id="gridSaldos">
+    <!-- SELECTOR DE MES Y QUINCENA -->
+    <section class="grid grid-cols-2 gap-3">
       <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto BAC</p>
-        <p class="text-base font-bold text-emerald-400" id="saldobac">Q0.00</p>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mes</label>
+        <select id="selectMes" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700">
+          <option value="1">Enero</option>
+          <option value="2">Febrero</option>
+          <option value="3">Marzo</option>
+          <option value="4">Abril</option>
+          <option value="5">Mayo</option>
+          <option value="6">Junio</option>
+          <option value="7">Julio</option>
+          <option value="8">Agosto</option>
+          <option value="9">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
       </div>
       <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Cuscatlán</p>
-        <p class="text-base font-bold text-emerald-400" id="saldocuscatlan">Q0.00</p>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Quincena</label>
+        <select id="selectQuincena" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700">
+          <option value="1">1ra Quincena (1-15)</option>
+          <option value="2">2da Quincena (16-Fin)</option>
+        </select>
       </div>
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Promerica</p>
-        <p class="text-base font-bold text-emerald-400" id="saldopromerica">Q0.00</p>
-      </div>
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Efectivo</p>
-        <p class="text-base font-bold text-emerald-400" id="saldoefectivo">Q0.00</p>
-      </div>
-    </div>
+    </section>
 
-    <!-- Navegación de Pestañas -->
-    <div class="flex bg-slate-900 p-1 rounded-2xl border border-slate-800">
-      <button id="tabPresupuesto" onclick="cambiarPestana('presupuesto')" class="w-1/2 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition">📊 Presupuesto</button>
-      <button id="tabTarjetas" onclick="cambiarPestana('tarjetas')" class="w-1/2 py-2 text-xs font-bold rounded-xl text-slate-400 transition">💳 Gastos Tarjeta</button>
-    </div>
-
-    <!-- Filtros: Mes y Quincena -->
-    <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 space-y-3">
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1 px-1">Mes</label>
-          <select id="selectMes" onchange="filtrarDatos()" class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-2 text-xs outline-none focus:border-emerald-500 font-medium">
-            <option value="1">Enero</option>
-            <option value="2">Febrero</option>
-            <option value="3">Marzo</option>
-            <option value="4">Abril</option>
-            <option value="5">Mayo</option>
-            <option value="6">Junio</option>
-            <option value="7">Julio</option>
-            <option value="8">Agosto</option>
-            <option value="9">Septiembre</option>
-            <option value="10">Octubre</option>
-            <option value="11">Noviembre</option>
-            <option value="12">Diciembre</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1 px-1">Quincena</label>
-          <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700/50">
-            <button id="btnQ1" onclick="cambiarQuincena(1)" class="w-1/2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white shadow transition">1ra Q</button>
-            <button id="btnQ2" onclick="cambiarQuincena(2)" class="w-1/2 py-1 text-[11px] font-bold rounded-lg text-slate-400 transition">2da Q</button>
-          </div>
-        </div>
+    <!-- TARJETAS DE TOTALES POR TARJETA -->
+    <section>
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Gastos por Tarjeta / Medio</h2>
+      <div id="contenedorTarjetas" class="grid grid-cols-2 gap-3">
+        <!-- Se genera dinámicamente -->
       </div>
-    </div>
+    </section>
 
-    <!-- VISTA 1: Dashboard Presupuesto -->
-    <div id="vistaPresupuesto" class="space-y-3">
-      <div class="flex justify-between items-center px-1">
-        <h2 class="text-sm font-bold text-slate-300">Presupuesto por Categoría</h2>
-        <button onclick="cargarDatos()" class="text-xs text-emerald-400 hover:text-emerald-300">🔄 Actualizar</button>
-      </div>
+    <!-- BARRAS DE PRESUPUESTO POR CATEGORÍA -->
+    <section class="space-y-3">
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Presupuesto por Categoría</h2>
       <div id="contenedorPresupuesto" class="space-y-3">
-        <p class="text-center text-slate-500 text-sm py-4">Cargando presupuesto...</p>
+        <!-- Se genera dinámicamente -->
       </div>
-    </div>
+    </section>
 
-    <!-- VISTA 2: Gastos por Tarjeta -->
-    <div id="vistaTarjetas" class="space-y-3 hidden">
-      <div class="flex justify-between items-center px-1">
-        <h2 class="text-sm font-bold text-slate-300">Historial de Gastos</h2>
-        <button onclick="cargarDatos()" class="text-xs text-emerald-400 hover:text-emerald-300">🔄 Actualizar</button>
-      </div>
-      <div id="contenedorTarjetas" class="space-y-2">
-        <p class="text-center text-slate-500 text-sm py-4">Cargando lista de gastos...</p>
-      </div>
-    </div>
+    <!-- BOTÓN REGISTRAR PAGO Y FORMULARIO -->
+    <section>
+      <button onclick="toggleFormulario()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center space-x-2">
+        <i class="fa-solid fa-plus text-sm"></i>
+        <span>Registrar Pago / Abono</span>
+      </button>
 
-    <!-- Formulario para Movimientos Manuales -->
-    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl space-y-4">
-      <h2 class="text-base font-bold text-white border-b border-slate-800 pb-2">➕ Registrar Pago / Abono</h2>
-      
-      <form id="formMovimiento" onsubmit="guardarMovimiento(event)" class="space-y-3">
+      <form id="formGasto" onsubmit="enviarGasto(event)" class="hidden mt-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4 shadow-2xl">
+        <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Nuevo Registro</h3>
+        
         <div>
-          <label class="text-xs font-semibold text-slate-400">Tipo de Movimiento</label>
-          <select id="tipo" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
-            <option value="Gasto Tarjeta">Gasto Tarjeta</option>
-            <option value="Gasto Efectivo">Gasto Efectivo</option>
-            <option value="Abono a Tarjeta">Abono a Tarjeta</option>
-            <option value="Ingreso">Ingreso / Pago</option>
-          </select>
+          <label class="block text-xs text-slate-400 mb-1">Monto (Q)</label>
+          <input type="number" step="0.01" id="inputMonto" required placeholder="0.00" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-lg font-bold">
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-slate-400">Cuenta / Tarjeta</label>
-          <select id="cuenta" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
-            <option value="BAC">BAC</option>
-            <option value="Cuscatlán">Cuscatlán</option>
-            <option value="Promerica">Promerica</option>
+          <label class="block text-xs text-slate-400 mb-1">Comercio / Descripción</label>
+          <input type="text" id="inputComercio" required placeholder="Ej. Supermercado, Gasolina..." class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Tarjeta / Método de Pago</label>
+          <select id="selectTarjetaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm">
             <option value="Efectivo">Efectivo</option>
+            <option value="BAC">BAC</option>
+            <option value="Cuscatlan">Cuscatlan</option>
+            <option value="Promerica">Promerica</option>
+            <option value="Bi">Bi</option>
+            <option value="Apple Pay">Apple Pay</option>
           </select>
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-slate-400">Categoría del Presupuesto</label>
-          <select id="categoriaSelect" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
-            <option value="General">General / Varios</option>
+          <label class="block text-xs text-slate-400 mb-1">Categoría de Presupuesto</label>
+          <select id="selectCategoriaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm">
+            <!-- Cargado dinámicamente desde el Sheet -->
           </select>
         </div>
 
-        <div>
-          <label class="text-xs font-semibold text-slate-400">Descripción / Establecimiento</label>
-          <input type="text" id="descripcion" placeholder="Ej. Compra súper, Pago recibo" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
-        </div>
-
-        <div>
-          <label class="text-xs font-semibold text-slate-400">Monto (Q)</label>
-          <input type="number" step="0.01" id="monto" placeholder="0.00" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
-        </div>
-
-        <button type="submit" id="btnGuardar" class="w-full bg-emerald-500 hover:bg-emerald-600 font-bold py-3.5 rounded-xl transition text-slate-950 mt-2 text-sm shadow-lg shadow-emerald-500/20">
-          Guardar en Google Sheets
+        <button type="submit" id="btnGuardar" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95">
+          Guardar Registro
         </button>
       </form>
-    </div>
+    </section>
+
+    <!-- HISTORIAL DE ÚLTIMOS MOVIMIENTOS -->
+    <section>
+      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Historial de Transacciones</h2>
+      <div id="contenedorHistorial" class="space-y-2">
+        <!-- Se genera dinámicamente -->
+      </div>
+    </section>
+
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyA8wVeWY5vKsmBtl9ccnd5uqDxL4rrlbAqGTvKS7B_rlkTy7fxlrE-K8JDK1dpHQ/exec';
+    // ** COLOCA AQUÍ LA URL DE TU WEB APP IMPLEMENTADA EN APPS SCRIPT **
+    const WEB_APP_URL = "URL_DE_TU_APPS_SCRIPT_AQUI";
 
     let datosPresupuesto = [];
     let datosMovimientos = [];
-    let quincenaActual = 1;
-    let mesActual = new Date().getMonth() + 1;
-    let pestanaActiva = 'presupuesto';
+    let listaCategorias = [];
+
+    const fechaHoy = new Date();
+    let mesActual = fechaHoy.getMonth() + 1;
+    let quincenaActual = fechaHoy.getDate() <= 15 ? 1 : 2;
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('selectMes').value = mesActual;
+      document.getElementById('selectQuincena').value = quincenaActual;
+      actualizarLabelFecha();
+      cargarDatos();
     });
 
+    function actualizarLabelFecha() {
+      const mesesNom = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      document.getElementById('lblQuincenaInfo').innerText = `${quincenaActual === 1 ? '1ra' : '2da'} Quincena - ${mesesNom[mesActual - 1]}`;
+    }
+
+    function cambiarFiltro() {
+      mesActual = parseInt(document.getElementById('selectMes').value);
+      quincenaActual = parseInt(document.getElementById('selectQuincena').value);
+      actualizarLabelFecha();
+      renderTodo();
+    }
+
     function cargarDatos() {
-      const oldScript = document.getElementById('jsonp-script');
-      if (oldScript) oldScript.remove();
+      const icon = document.getElementById('iconReload');
+      if (icon) icon.classList.add('fa-spin');
 
       const script = document.createElement('script');
-      script.id = 'jsonp-script';
-      script.src = `${SCRIPT_URL}?callback=procesarRespuesta&_=${new Date().getTime()}`;
+      script.src = `${WEB_APP_URL}?callback=procesarRespuestaScript`;
       document.body.appendChild(script);
     }
 
-    function procesarRespuesta(data) {
-      datosPresupuesto = data.presupuesto || [];
-      datosMovimientos = data.movimientos || [];
-      
-      const selectCat = document.getElementById('categoriaSelect');
-      selectCat.innerHTML = '<option value="General">General / Varios</option>';
-      if (data.categorias && data.categorias.length > 0) {
-        data.categorias.forEach(cat => {
-          selectCat.innerHTML += `<option value="${cat}">${cat}</option>`;
-        });
+    function procesarRespuestaScript(response) {
+      const icon = document.getElementById('iconReload');
+      if (icon) icon.classList.remove('fa-spin');
+
+      if (!response) return;
+
+      datosPresupuesto = response.presupuesto || [];
+      datosMovimientos = response.movimientos || [];
+      listaCategorias = response.categorias || [];
+
+      poblarCategoriasForm();
+      renderTodo();
+    }
+
+    function poblarCategoriasForm() {
+      const select = document.getElementById('selectCategoriaForm');
+      select.innerHTML = '';
+      if (listaCategorias.length === 0) {
+        select.innerHTML = '<option value="General">General</option>';
+        return;
       }
-
-      filtrarDatos();
+      listaCategorias.forEach(cat => {
+        select.innerHTML += `<option value="${cat}">${cat}</option>`;
+      });
     }
 
-    function cambiarPestana(pestana) {
-      pestanaActiva = pestana;
-      const tabP = document.getElementById('tabPresupuesto');
-      const tabT = document.getElementById('tabTarjetas');
-      const vistaP = document.getElementById('vistaPresupuesto');
-      const vistaT = document.getElementById('vistaTarjetas');
-
-      if (pestana === 'presupuesto') {
-        tabP.className = "w-1/2 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition";
-        tabT.className = "w-1/2 py-2 text-xs font-bold rounded-xl text-slate-400 transition";
-        vistaP.classList.remove('hidden');
-        vistaT.classList.add('hidden');
-      } else {
-        tabT.className = "w-1/2 py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition";
-        tabP.className = "w-1/2 py-2 text-xs font-bold rounded-xl text-slate-400 transition";
-        vistaT.classList.remove('hidden');
-        vistaP.classList.add('hidden');
-      }
-    }
-
-    function cambiarQuincena(q) {
-      quincenaActual = q;
-      document.getElementById('btnQ1').className = q === 1 ? "w-1/2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white shadow transition" : "w-1/2 py-1 text-[11px] font-bold rounded-lg text-slate-400 transition";
-      document.getElementById('btnQ2').className = q === 2 ? "w-1/2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white shadow transition" : "w-1/2 py-1 text-[11px] font-bold rounded-lg text-slate-400 transition";
-      filtrarDatos();
-    }
-
-    function filtrarDatos() {
-      mesActual = parseInt(document.getElementById('selectMes').value);
+    function renderTodo() {
+      renderTarjetasTotales();
       renderPresupuesto();
-      renderTarjetas();
-      calcularTotalesTarjetas();
+      renderHistorial();
     }
 
-    function calcularTotalesTarjetas() {
-      let totals = { BAC: 0, Cuscatlán: 0, Promerica: 0, Efectivo: 0 };
+    // RENDERIZADO DE TARJETAS
+    function renderTarjetasTotales() {
+      const container = document.getElementById('contenedorTarjetas');
+      container.innerHTML = '';
+
+      const totales = {};
 
       datosMovimientos.forEach(m => {
-        const tarjeta = (m[1] || '').toString();
+        const fecha = m[0] ? new Date(m[0]) : null;
+        const tarjeta = (m[1] || 'Otros').toString().trim();
         const monto = parseFloat(m[3]) || 0;
 
-        for (let k in totals) {
-          if (tarjeta.toLowerCase().includes(k.toLowerCase())) {
-            totals[k] += monto;
+        if (fecha) {
+          const mMes = fecha.getMonth() + 1;
+          const mDia = fecha.getDate();
+          const mQ = mDia <= 15 ? 1 : 2;
+
+          if (mMes === mesActual && mQ === quincenaActual) {
+            totales[tarjeta] = (totales[tarjeta] || 0) + monto;
           }
         }
       });
 
-      document.getElementById('saldobac').innerText = `Q${totals['BAC'].toFixed(2)}`;
-      document.getElementById('saldocuscatlan').innerText = `Q${totals['Cuscatlán'].toFixed(2)}`;
-      document.getElementById('saldopromerica').innerText = `Q${totals['Promerica'].toFixed(2)}`;
-      document.getElementById('saldoefectivo').innerText = `Q${totals['Efectivo'].toFixed(2)}`;
+      const keys = Object.keys(totales);
+      if (keys.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-xs col-span-2 text-center py-4 bg-slate-900 rounded-2xl border border-slate-800">No hay gastos en esta quincena.</p>';
+        return;
+      }
+
+      keys.forEach(tarj => {
+        container.innerHTML += `
+          <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-1 shadow-md min-w-0">
+            <span class="text-xs text-slate-400 font-medium truncate block w-full" title="${tarj}">${tarj}</span>
+            <span class="text-lg font-extrabold text-white tracking-tight truncate block w-full">Q${totales[tarj].toFixed(2)}</span>
+          </div>
+        `;
+      });
     }
 
+    // RENDERIZADO DE BARRAS DE PRESUPUESTO
     function renderPresupuesto() {
       const container = document.getElementById('contenedorPresupuesto');
       container.innerHTML = '';
 
-      if (datosPresupuesto.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 text-center text-sm py-4">No hay datos en el presupuesto.</p>';
+      if (!datosPresupuesto || datosPresupuesto.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-center text-sm py-4">No hay presupuesto configurado.</p>';
         return;
       }
 
@@ -252,18 +247,38 @@
         if (!categoria) return;
 
         const ideal = quincenaActual === 1 ? parseFloat(row[1]) || 0 : parseFloat(row[4]) || 0;
-        const gastado = quincenaActual === 1 ? parseFloat(row[2]) || 0 : parseFloat(row[5]) || 0;
-        const disponible = quincenaActual === 1 ? parseFloat(row[3]) || 0 : parseFloat(row[6]) || 0;
 
-        if (ideal > 0 || gastado > 0) {
-          const porcentaje = ideal > 0 ? Math.min(100, Math.round((gastado / ideal) * 100)) : 0;
+        let gastadoCalculado = 0;
+        datosMovimientos.forEach(m => {
+          const fecha = m[0] ? new Date(m[0]) : null;
+          const catMov = (m[4] || '').toString().trim().toLowerCase();
+          const catPres = categoria.toString().trim().toLowerCase();
+          const monto = parseFloat(m[3]) || 0;
+
+          if (fecha && catMov === catPres) {
+            const mMes = fecha.getMonth() + 1;
+            const mDia = fecha.getDate();
+            const mQ = mDia <= 15 ? 1 : 2;
+
+            if (mMes === mesActual && mQ === quincenaActual) {
+              gastadoCalculado += monto;
+            }
+          }
+        });
+
+        const gastadoHoja = quincenaActual === 1 ? parseFloat(row[2]) || 0 : parseFloat(row[5]) || 0;
+        const totalGastado = gastadoCalculado > 0 ? gastadoCalculado : gastadoHoja;
+        const disponible = ideal - totalGastado;
+
+        if (ideal > 0 || totalGastado > 0) {
+          const porcentaje = ideal > 0 ? Math.min(100, Math.round((totalGastado / ideal) * 100)) : 0;
           const esNegativo = disponible < 0;
 
           container.innerHTML += `
             <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2">
               <div class="flex justify-between items-center">
-                <span class="font-bold text-slate-200 text-sm">${categoria}</span>
-                <span class="text-xs font-bold ${esNegativo ? 'text-red-400' : 'text-emerald-400'}">
+                <span class="font-bold text-slate-200 text-sm truncate pr-2">${categoria}</span>
+                <span class="text-xs font-bold ${esNegativo ? 'text-red-400' : 'text-emerald-400'} shrink-0">
                   Disp: Q${disponible.toFixed(2)}
                 </span>
               </div>
@@ -271,7 +286,7 @@
                 <div class="${esNegativo ? 'bg-red-500' : 'bg-emerald-500'} h-full transition-all duration-300" style="width: ${porcentaje}%"></div>
               </div>
               <div class="flex justify-between text-[11px] text-slate-400">
-                <span>Gastado: Q${gastado.toFixed(2)}</span>
+                <span>Gastado: Q${totalGastado.toFixed(2)}</span>
                 <span>Ideal: Q${ideal.toFixed(2)}</span>
               </div>
             </div>
@@ -280,71 +295,81 @@
       });
     }
 
-    function renderTarjetas() {
-      const container = document.getElementById('contenedorTarjetas');
+    // RENDERIZADO DEL HISTORIAL DE TRANSACCIONES
+    function renderHistorial() {
+      const container = document.getElementById('contenedorHistorial');
       container.innerHTML = '';
 
-      if (datosMovimientos.length === 0) {
-        container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay gastos en tarjetas registrados.</p>`;
+      const filtrados = datosMovimientos.filter(m => {
+        const fecha = m[0] ? new Date(m[0]) : null;
+        if (!fecha) return false;
+        const mMes = fecha.getMonth() + 1;
+        const mDia = fecha.getDate();
+        const mQ = mDia <= 15 ? 1 : 2;
+        return mMes === mesActual && mQ === quincenaActual;
+      }).reverse();
+
+      if (filtrados.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4 bg-slate-900 rounded-2xl border border-slate-800">No hay movimientos en este periodo.</p>';
         return;
       }
 
-      datosMovimientos.slice().reverse().forEach(m => {
-        const fecha = m[0] ? new Date(m[0]).toLocaleDateString() : 'N/A';
-        const tarjeta = m[1] || 'Tarjeta';
-        const comercio = m[2] || 'Comercio';
+      filtrados.forEach(m => {
+        const fecha = new Date(m[0]).toLocaleDateString('es-GT', { day: '2-digit', month: '2-digit' });
+        const tarj = m[1] || 'Efectivo';
+        const comercio = m[2] || 'Gasto';
         const monto = parseFloat(m[3]) || 0;
-        const cat = m[4] || '';
+        const cat = m[4] || 'General';
 
         container.innerHTML += `
-          <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
-            <div class="space-y-0.5">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-200 text-sm">${comercio}</span>
-                <span class="text-[10px] bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-md">${tarjeta}</span>
-              </div>
-              <p class="text-[11px] text-slate-400">${fecha} ${cat ? '• ' + cat : ''}</p>
+          <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center space-x-3">
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-bold text-slate-200 truncate">${comercio}</p>
+              <p class="text-[10px] text-slate-400 truncate">${fecha} • ${tarj} • <span class="text-indigo-400">${cat}</span></p>
             </div>
-            <span class="font-bold text-sm text-red-400">-Q${monto.toFixed(2)}</span>
+            <span class="text-sm font-extrabold text-slate-100 shrink-0">Q${monto.toFixed(2)}</span>
           </div>
         `;
       });
     }
 
-    async function guardarMovimiento(e) {
+    function toggleFormulario() {
+      const form = document.getElementById('formGasto');
+      form.classList.toggle('hidden');
+    }
+
+    function enviarGasto(e) {
       e.preventDefault();
       const btn = document.getElementById('btnGuardar');
       btn.innerText = 'Guardando...';
       btn.disabled = true;
 
       const payload = {
-        tipo: document.getElementById('tipo').value,
-        tarjeta: document.getElementById('cuenta').value,
-        categoria: document.getElementById('categoriaSelect').value,
-        comercio: document.getElementById('descripcion').value,
-        monto: document.getElementById('monto').value
+        fecha: new Date().toISOString(),
+        monto: parseFloat(document.getElementById('inputMonto').value),
+        comercio: document.getElementById('inputComercio').value,
+        tarjeta: document.getElementById('selectTarjetaForm').value,
+        categoria: document.getElementById('selectCategoriaForm').value
       };
 
-      try {
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify(payload)
-        });
-
-        alert('¡Movimiento guardado con éxito!');
-        document.getElementById('formMovimiento').reset();
-        setTimeout(cargarDatos, 1500);
-      } catch (err) {
-        alert('Error al guardar el movimiento.');
-      } finally {
-        btn.innerText = 'Guardar en Google Sheets';
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        alert('¡Gasto registrado con éxito!');
+        document.getElementById('formGasto').reset();
+        toggleFormulario();
+        btn.innerText = 'Guardar Registro';
         btn.disabled = false;
-      }
+        cargarDatos();
+      }).catch(err => {
+        alert('Error al guardar: ' + err);
+        btn.innerText = 'Guardar Registro';
+        btn.disabled = false;
+      });
     }
-
-    cargarDatos();
   </script>
 </body>
 </html>
