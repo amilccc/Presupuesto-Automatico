@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mi Presupuesto V3</title>
+  <title>Mi Presupuesto V3.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-12 font-sans">
@@ -13,9 +13,9 @@
     <header class="text-center py-1">
       <div class="flex justify-center items-center gap-2">
         <h1 class="text-2xl font-bold text-emerald-400">📊 Control Financiero</h1>
-        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full">V3</span>
+        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full">V3.1</span>
       </div>
-      <p class="text-xs text-slate-400 mt-0.5">Sincronizado con Google Sheets</p>
+      <p class="text-xs text-slate-400 mt-0.5">Sincronizado con Google Sheets (Multi-divisa)</p>
     </header>
 
     <!-- Resumen por Cuentas / Tarjetas -->
@@ -117,8 +117,9 @@
         <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Periodo de Facturación</p>
         <p class="text-xs font-bold text-slate-200" id="cortePeriodoTexto">-</p>
         <div class="pt-2 border-t border-slate-800">
-          <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Total Acumulado del Corte</p>
+          <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Total Acumulado del Corte (en Quetzales)</p>
           <p class="text-2xl font-extrabold text-emerald-400" id="corteTotalMonto">Q0.00</p>
+          <p class="text-[10px] text-slate-500 mt-1">Tipos de cambio: $1 = Q8 | 1€ = Q10</p>
         </div>
       </div>
 
@@ -153,6 +154,21 @@
           </select>
         </div>
 
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-2">
+            <label class="text-xs font-semibold text-slate-400">Monto</label>
+            <input type="number" step="0.01" id="monto" placeholder="0.00" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400">Moneda</label>
+            <select id="moneda" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500 font-bold text-emerald-400">
+              <option value="Q">Q (GTQ)</option>
+              <option value="$">$ (USD)</option>
+              <option value="€">€ (EUR)</option>
+            </select>
+          </div>
+        </div>
+
         <div>
           <label class="text-xs font-semibold text-slate-400">Categoría del Presupuesto</label>
           <select id="categoriaSelect" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
@@ -162,12 +178,7 @@
 
         <div>
           <label class="text-xs font-semibold text-slate-400">Descripción / Establecimiento</label>
-          <input type="text" id="descripcion" placeholder="Ej. Compra súper, Pago recibo" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
-        </div>
-
-        <div>
-          <label class="text-xs font-semibold text-slate-400">Monto (Q)</label>
-          <input type="number" step="0.01" id="monto" placeholder="0.00" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
+          <input type="text" id="descripcion" placeholder="Ej. Compra súper, Hotel Paris" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
         </div>
 
         <button type="submit" id="btnGuardar" class="w-full bg-emerald-500 hover:bg-emerald-600 font-bold py-3.5 rounded-xl transition text-slate-950 mt-2 text-sm shadow-lg shadow-emerald-500/20">
@@ -217,7 +228,6 @@
       }
     }
 
-    // Detector mapeado a tus nombres de Apple Pay (Platinum Cuscatlan, Premia Platinum, Visa Millas Plus, Visa Signature)
     function detectarTarjeta(texto) {
       if (!texto) return 'Otro';
       const t = texto.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -229,7 +239,29 @@
       return 'Otro';
     }
 
-    // Función segura para extraer mes y día de cualquier formato de fecha de Google Sheets
+    // Extrae monto, moneda y valor numérico base desde el registro
+    function parsearMontoYMoneda(montoStr) {
+      if (!montoStr) return { valor: 0, moneda: 'Q', valorEnQuetzales: 0 };
+      const str = montoStr.toString().trim();
+      
+      let moneda = 'Q';
+      let limpio = str.replace(/[^0-9.\-]/g, '');
+      
+      if (str.includes('$') || str.toUpperCase().includes('USD')) {
+        moneda = '$';
+      } else if (str.includes('€') || str.toUpperCase().includes('EUR')) {
+        moneda = '€';
+      }
+
+      let valor = parseFloat(limpio) || 0;
+      let valorEnQuetzales = valor;
+
+      if (moneda === '$') valorEnQuetzales = valor * 8;
+      if (moneda === '€') valorEnQuetzales = valor * 10;
+
+      return { valor, moneda, valorEnQuetzales };
+    }
+
     function parsearFecha(fechaStr) {
       if (!fechaStr) return null;
       let d;
@@ -314,10 +346,11 @@
         if (!fInfo || fInfo.mes !== mesActual) return;
 
         const tarjeta = detectarTarjeta(m[1]);
-        const monto = parseFloat(m[3]) || 0;
+        const infoMonto = parsearMontoYMoneda(m[3]);
 
         if (totals.hasOwnProperty(tarjeta)) {
-          totals[tarjeta] += monto;
+          // Para los saldos generales y presupuesto, unificamos a Quetzales usando la conversión
+          totals[tarjeta] += infoMonto.valorEnQuetzales;
         }
       });
 
@@ -346,12 +379,12 @@
         if (quincenaMov !== quincenaActual) return;
 
         const cat = (m[4] || 'General').toString().trim().toLowerCase();
-        const monto = parseFloat(m[3]) || 0;
+        const infoMonto = parsearMontoYMoneda(m[3]);
 
         if (!gastosPorCategoria[cat]) {
           gastosPorCategoria[cat] = 0;
         }
-        gastosPorCategoria[cat] += monto;
+        gastosPorCategoria[cat] += infoMonto.valorEnQuetzales;
       });
 
       datosPresupuesto.forEach(row => {
@@ -395,8 +428,8 @@
       const movimientosValidos = datosMovimientos.filter(m => {
         const fInfo = parsearFecha(m[0]);
         if (!fInfo || fInfo.mes !== mesActual) return false;
-        const monto = parseFloat(m[3]);
-        return !isNaN(monto) && monto > 0;
+        const infoMonto = parsearMontoYMoneda(m[3]);
+        return infoMonto.valor > 0;
       });
 
       if (movimientosValidos.length === 0) {
@@ -409,8 +442,11 @@
         const fecha = fInfo ? fInfo.objetoFecha.toISOString().split('T')[0] : 'N/A';
         const tarjeta = m[1] || 'Tarjeta';
         const comercio = m[2] || 'Comercio';
-        const monto = parseFloat(m[3]) || 0;
+        const infoMonto = parsearMontoYMoneda(m[3]);
         const cat = m[4] || '';
+
+        // Muestra la moneda original con la que se compró
+        const textoMontoVisual = `${infoMonto.moneda}${infoMonto.valor.toFixed(2)}`;
 
         container.innerHTML += `
           <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
@@ -421,7 +457,7 @@
               </div>
               <p class="text-[11px] text-slate-400">${fecha} ${cat ? '• ' + cat : ''}</p>
             </div>
-            <span class="font-bold text-sm text-red-400">-Q${monto.toFixed(2)}</span>
+            <span class="font-bold text-sm text-red-400">-${textoMontoVisual}</span>
           </div>
         `;
       });
@@ -463,14 +499,14 @@
       document.getElementById('cortePeriodoTexto').innerText = 
         `${fechaInicio.toLocaleDateString()} al ${fechaFin.toLocaleDateString()}`;
 
-      let totalCorte = 0;
+      let totalCorteQuetzales = 0;
       let htmlMovimientos = '';
 
       datosMovimientos.forEach(m => {
         const tarjetaMovTexto = m[1] || '';
         const tarjetaDetectada = detectarTarjeta(tarjetaMovTexto);
         const comercio = m[2] || 'Comercio';
-        const monto = parseFloat(m[3]) || 0;
+        const infoMonto = parsearMontoYMoneda(m[3]);
         const cat = m[4] || '';
 
         if (tarjetaDetectada === tarjetaCorteActual) {
@@ -479,8 +515,10 @@
           const fechaMov = fInfo.objetoFecha;
 
           if (fechaMov >= fechaInicio && fechaMov <= fechaFin) {
-            totalCorte += monto;
+            totalCorteQuetzales += infoMonto.valorEnQuetzales;
             const fechaFormateada = fechaMov.toISOString().split('T')[0];
+            const textoMontoVisual = `${infoMonto.moneda}${infoMonto.valor.toFixed(2)}`;
+
             htmlMovimientos += `
               <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
                 <div class="space-y-0.5">
@@ -490,14 +528,17 @@
                   </div>
                   <p class="text-[11px] text-slate-400">${fechaFormateada} ${cat ? '• ' + cat : ''}</p>
                 </div>
-                <span class="font-bold text-sm text-red-400">-Q${monto.toFixed(2)}</span>
+                <div class="text-right">
+                  <span class="font-bold text-sm text-red-400">-${textoMontoVisual}</span>
+                  ${infoMonto.moneda !== 'Q' ? `<p class="text-[10px] text-slate-500">(≈ Q${infoMonto.valorEnQuetzales.toFixed(2)})</p>` : ''}
+                </div>
               </div>
             `;
           }
         }
       });
 
-      document.getElementById('corteTotalMonto').innerText = `Q${totalCorte.toFixed(2)}`;
+      document.getElementById('corteTotalMonto').innerText = `Q${totalCorteQuetzales.toFixed(2)}`;
 
       if (htmlMovimientos === '') {
         container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay consumos registrados en este ciclo de corte.</p>`;
@@ -512,12 +553,18 @@
       btn.innerText = 'Guardando...';
       btn.disabled = true;
 
+      const montoInput = document.getElementById('monto').value;
+      const simboloMoneda = document.getElementById('moneda').value;
+      
+      // Adjunta el símbolo de moneda al valor que se envía a Google Sheets para que se guarde correctamente
+      const montoConDivisa = `${simboloMoneda}${montoInput}`;
+
       const payload = {
         tipo: document.getElementById('tipo').value,
         tarjeta: document.getElementById('cuenta').value,
         categoria: document.getElementById('categoriaSelect').value,
         comercio: document.getElementById('descripcion').value,
-        monto: document.getElementById('monto').value
+        monto: montoConDivisa
       };
 
       try {
@@ -530,6 +577,7 @@
 
         alert('¡Movimiento guardado con éxito!');
         document.getElementById('formMovimiento').reset();
+        document.getElementById('moneda').value = 'Q';
         setTimeout(cargarDatos, 1500);
       } catch (err) {
         alert('Error al guardar el movimiento.');
