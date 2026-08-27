@@ -11,22 +11,41 @@
 
   <div class="max-w-md mx-auto p-4 space-y-6">
 
-    <!-- ENCABEZADO -->
-    <header class="flex justify-between items-center bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-xl">
-      <div>
-        <h1 class="text-xl font-bold tracking-tight text-white">Mi Presupuesto</h1>
-        <p class="text-xs text-slate-400" id="lblQuincenaInfo">Cargando fecha...</p>
+    <!-- ENCABEZADO PRINCIPAL CON RESUMEN GENERAL -->
+    <header class="bg-gradient-to-br from-indigo-900/80 via-slate-900 to-slate-900 p-5 rounded-3xl border border-indigo-500/20 shadow-2xl relative overflow-hidden">
+      <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl pointer-events-none"></div>
+      
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <span class="text-[10px] font-bold tracking-widest uppercase text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">Dashboard Financiero</span>
+          <h1 class="text-2xl font-black tracking-tight text-white mt-2">Mi Presupuesto</h1>
+          <p class="text-xs text-slate-400 mt-0.5" id="lblQuincenaInfo">Cargando datos...</p>
+        </div>
+        <button onclick="cargarDatos()" class="bg-indigo-600/80 hover:bg-indigo-600 text-white p-3 rounded-2xl transition-all shadow-lg active:scale-95 border border-indigo-400/30 flex items-center justify-center">
+          <i class="fa-solid fa-rotate text-sm" id="iconReload"></i>
+        </button>
       </div>
-      <button onclick="cargarDatos()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center">
-        <i class="fa-solid fa-rotate text-sm" id="iconReload"></i>
-      </button>
+
+      <!-- TARJETA RESUMEN TOTAL -->
+      <div class="pt-3 border-t border-slate-800/80 grid grid-cols-2 gap-3">
+        <div>
+          <p class="text-[10px] uppercase font-bold text-slate-400">Total Gastado</p>
+          <p class="text-xl font-extrabold text-white" id="lblTotalGastado">Q0.00</p>
+        </div>
+        <div>
+          <p class="text-[10px] uppercase font-bold text-slate-400">Presupuesto Ideal</p>
+          <p class="text-xl font-extrabold text-indigo-300" id="lblTotalIdeal">Q0.00</p>
+        </div>
+      </div>
     </header>
 
     <!-- SELECTOR DE MES Y QUINCENA -->
     <section class="grid grid-cols-2 gap-3">
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mes</label>
-        <select id="selectMes" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700 focus:border-indigo-500">
+      <div class="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-md">
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+          <i class="fa-regular fa-calendar text-indigo-400"></i> Mes
+        </label>
+        <select id="selectMes" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-xs font-semibold rounded-xl p-2.5 outline-none border border-slate-700 focus:border-indigo-500 transition-colors">
           <option value="1">Enero</option>
           <option value="2">Febrero</option>
           <option value="3">Marzo</option>
@@ -41,81 +60,102 @@
           <option value="12">Diciembre</option>
         </select>
       </div>
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
-        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Quincena</label>
-        <select id="selectQuincena" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700 focus:border-indigo-500">
+      <div class="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 shadow-md">
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+          <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> Quincena
+        </label>
+        <select id="selectQuincena" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-xs font-semibold rounded-xl p-2.5 outline-none border border-slate-700 focus:border-indigo-500 transition-colors">
           <option value="1">1ra Quincena (1-15)</option>
           <option value="2">2da Quincena (16-Fin)</option>
         </select>
       </div>
     </section>
 
-    <!-- TARJETAS DE TOTALES POR TARJETA / MEDIO -->
+    <!-- TARJETAS DE TOTALES POR TARJETA / MEDIO DE PAGO -->
     <section>
-      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Gastos por Tarjeta / Medio</h2>
+      <div class="flex justify-between items-center mb-3 px-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-credit-card text-indigo-400"></i> Gastos por Tarjeta / Medio
+        </h2>
+      </div>
       <div id="contenedorTarjetas" class="grid grid-cols-2 gap-3">
-        <!-- Se genera dinámicamente -->
+        <!-- Generado dinámicamente -->
       </div>
     </section>
 
     <!-- BARRAS DE PRESUPUESTO POR CATEGORÍA -->
     <section class="space-y-3">
-      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Presupuesto por Categoría</h2>
+      <div class="flex justify-between items-center px-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-chart-pie text-indigo-400"></i> Presupuesto por Categoría
+        </h2>
+      </div>
       <div id="contenedorPresupuesto" class="space-y-3">
-        <!-- Se genera dinámicamente -->
+        <!-- Generado dinámicamente -->
       </div>
     </section>
 
-    <!-- BOTÓN REGISTRAR PAGO Y FORMULARIO -->
+    <!-- BOTÓN Y FORMULARIO DE REGISTRO DE GASTO -->
     <section>
-      <button onclick="toggleFormulario()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all active:scale-95 flex items-center justify-center space-x-2">
+      <button onclick="toggleFormulario()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center space-x-2 border border-indigo-400/20">
         <i class="fa-solid fa-plus text-sm"></i>
-        <span>Registrar Pago / Abono</span>
+        <span>Registrar Nuevo Gasto</span>
       </button>
 
       <form id="formGasto" onsubmit="enviarGasto(event)" class="hidden mt-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4 shadow-2xl">
-        <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Nuevo Registro</h3>
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square text-indigo-400"></i> Nuevo Registro
+          </h3>
+          <button type="button" onclick="toggleFormulario()" class="text-slate-400 hover:text-white text-xs">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
         
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Monto (Q)</label>
-          <input type="number" step="0.01" id="inputMonto" required placeholder="0.00" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-lg font-bold focus:border-indigo-500">
+          <label class="block text-xs font-medium text-slate-400 mb-1">Monto (Q)</label>
+          <input type="number" step="0.01" id="inputMonto" required placeholder="0.00" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-lg font-bold focus:border-indigo-500 transition-colors">
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Comercio / Descripción</label>
-          <input type="text" id="inputComercio" required placeholder="Ej. Supermercado, Gasolina..." class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500">
+          <label class="block text-xs font-medium text-slate-400 mb-1">Comercio / Descripción</label>
+          <input type="text" id="inputComercio" required placeholder="Ej. Supermercado, Gasolina..." class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500 transition-colors">
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Tarjeta / Método de Pago</label>
-          <select id="selectTarjetaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500">
+          <label class="block text-xs font-medium text-slate-400 mb-1">Tarjeta / Método de Pago</label>
+          <select id="selectTarjetaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500 transition-colors">
             <option value="Efectivo">Efectivo</option>
             <option value="BAC">BAC</option>
             <option value="Cuscatlan">Cuscatlan</option>
             <option value="Promerica">Promerica</option>
-            <option value="Bi">Bi</option>
             <option value="Apple Pay">Apple Pay</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs text-slate-400 mb-1">Categoría de Presupuesto</label>
-          <select id="selectCategoriaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500">
-            <!-- Cargado dinámicamente desde el Sheet -->
+          <label class="block text-xs font-medium text-slate-400 mb-1">Categoría de Presupuesto</label>
+          <select id="selectCategoriaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500 transition-colors">
+            <!-- Cargado dinámicamente -->
           </select>
         </div>
 
-        <button type="submit" id="btnGuardar" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95">
-          Guardar Registro
+        <button type="submit" id="btnGuardar" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i>
+          <span>Guardar Registro</span>
         </button>
       </form>
     </section>
 
     <!-- HISTORIAL DE ÚLTIMOS MOVIMIENTOS -->
     <section>
-      <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Historial de Transacciones</h2>
+      <div class="flex justify-between items-center mb-3 px-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-list-check text-indigo-400"></i> Historial de Transacciones
+        </h2>
+      </div>
       <div id="contenedorHistorial" class="space-y-2">
-        <!-- Se genera dinámicamente -->
+        <!-- Generado dinámicamente -->
       </div>
     </section>
 
@@ -140,7 +180,7 @@
       cargarDatos();
     });
 
-    // PARSER DE FECHA CAPAZ DE LEER DIVERSOS FORMATOS SCRIPT Y TEXTO
+    // PARSER FLEXIBLE Y PRECISO DE FECHAS
     function parsearFecha(valFecha) {
       if (!valFecha) return null;
       if (valFecha instanceof Date) return valFecha;
@@ -150,11 +190,9 @@
       if (str.includes('/') || str.includes('-')) {
         const partes = str.split(/[/-]/);
         if (partes.length >= 3) {
-          // Formato YYYY-MM-DD
           if (partes[0].length === 4) {
             return new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
           }
-          // Formato DD/MM/YYYY
           return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
         }
       }
@@ -165,7 +203,7 @@
 
     function actualizarLabelFecha() {
       const mesesNom = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-      document.getElementById('lblQuincenaInfo').innerText = `${quincenaActual === 1 ? '1ra' : '2da'} Quincena - ${mesesNom[mesActual - 1]}`;
+      document.getElementById('lblQuincenaInfo').innerText = `${quincenaActual === 1 ? '1ra' : '2da'} Quincena • ${mesesNom[mesActual - 1]}`;
     }
 
     function cambiarFiltro() {
@@ -216,7 +254,7 @@
       renderHistorial();
     }
 
-    // RENDERIZADO DE TARJETAS
+    // RENDERIZADO DE TARJETAS DE MÉTODOS DE PAGO
     function renderTarjetasTotales() {
       const container = document.getElementById('contenedorTarjetas');
       container.innerHTML = '';
@@ -241,27 +279,33 @@
 
       const keys = Object.keys(totales);
       if (keys.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 text-xs col-span-2 text-center py-4 bg-slate-900 rounded-2xl border border-slate-800">No hay gastos en esta quincena.</p>';
+        container.innerHTML = '<p class="text-slate-500 text-xs col-span-2 text-center py-6 bg-slate-900/60 rounded-2xl border border-slate-800">No hay gastos registrados en esta quincena.</p>';
         return;
       }
 
       keys.forEach(tarj => {
         container.innerHTML += `
-          <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-1 shadow-md min-w-0">
-            <span class="text-xs text-slate-400 font-medium truncate block w-full" title="${tarj}">${tarj}</span>
-            <span class="text-lg font-extrabold text-white tracking-tight truncate block w-full">Q${totales[tarj].toFixed(2)}</span>
+          <div class="bg-gradient-to-br from-slate-900 to-slate-900/90 p-4 rounded-2xl border border-slate-800/80 space-y-1 shadow-md hover:border-slate-700 transition-all">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-slate-400 font-semibold truncate block pr-1" title="${tarj}">${tarj}</span>
+              <i class="fa-solid fa-credit-card text-[10px] text-indigo-400/60"></i>
+            </div>
+            <span class="text-lg font-black text-white tracking-tight truncate block">Q${totales[tarj].toFixed(2)}</span>
           </div>
         `;
       });
     }
 
-    // RENDERIZADO DE BARRAS DE PRESUPUESTO
+    // RENDERIZADO DE BARRAS DE PRESUPUESTO CON MÉTRICAS GENERALES
     function renderPresupuesto() {
       const container = document.getElementById('contenedorPresupuesto');
       container.innerHTML = '';
 
+      let sumaGastadoGeneral = 0;
+      let sumaIdealGeneral = 0;
+
       if (!datosPresupuesto || datosPresupuesto.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 text-center text-sm py-4">No hay presupuesto configurado.</p>';
+        container.innerHTML = '<p class="text-slate-500 text-center text-sm py-6">No hay categorías configuradas.</p>';
         return;
       }
 
@@ -293,29 +337,36 @@
         const totalGastado = gastadoCalculado > 0 ? gastadoCalculado : gastadoHoja;
         const disponible = ideal - totalGastado;
 
+        sumaGastadoGeneral += totalGastado;
+        sumaIdealGeneral += ideal;
+
         if (ideal > 0 || totalGastado > 0) {
           const porcentaje = ideal > 0 ? Math.min(100, Math.round((totalGastado / ideal) * 100)) : 0;
           const esNegativo = disponible < 0;
 
           container.innerHTML += `
-            <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2">
+            <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800 space-y-2.5 shadow-sm hover:border-slate-700 transition-all">
               <div class="flex justify-between items-center">
-                <span class="font-bold text-slate-200 text-sm truncate pr-2">${categoria}</span>
-                <span class="text-xs font-bold ${esNegativo ? 'text-red-400' : 'text-emerald-400'} shrink-0">
-                  Disp: Q${disponible.toFixed(2)}
+                <span class="font-bold text-slate-100 text-sm truncate pr-2">${categoria}</span>
+                <span class="text-xs font-black ${esNegativo ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'} px-2 py-0.5 rounded-md border">
+                  ${esNegativo ? 'Excedido' : 'Disp'}: Q${Math.abs(disponible).toFixed(2)}
                 </span>
               </div>
-              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                <div class="${esNegativo ? 'bg-red-500' : 'bg-emerald-500'} h-full transition-all duration-300" style="width: ${porcentaje}%"></div>
+              <div class="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+                <div class="${esNegativo ? 'bg-gradient-to-r from-red-600 to-red-400' : 'bg-gradient-to-r from-emerald-600 to-emerald-400'} h-full rounded-full transition-all duration-500" style="width: ${porcentaje}%"></div>
               </div>
-              <div class="flex justify-between text-[11px] text-slate-400">
-                <span>Gastado: Q${totalGastado.toFixed(2)}</span>
-                <span>Ideal: Q${ideal.toFixed(2)}</span>
+              <div class="flex justify-between text-[11px] font-medium text-slate-400">
+                <span>Gastado: <strong class="text-slate-200">Q${totalGastado.toFixed(2)}</strong></span>
+                <span>Ideal: <strong class="text-slate-200">Q${ideal.toFixed(2)}</strong></span>
               </div>
             </div>
           `;
         }
       });
+
+      // Actualizar Encabezado General
+      document.getElementById('lblTotalGastado').innerText = `Q${sumaGastadoGeneral.toFixed(2)}`;
+      document.getElementById('lblTotalIdeal').innerText = `Q${sumaIdealGeneral.toFixed(2)}`;
     }
 
     // RENDERIZADO DEL HISTORIAL DE TRANSACCIONES
@@ -333,7 +384,7 @@
       }).reverse();
 
       if (filtrados.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 text-xs text-center py-4 bg-slate-900 rounded-2xl border border-slate-800">No hay movimientos en este periodo.</p>';
+        container.innerHTML = '<p class="text-slate-500 text-xs text-center py-6 bg-slate-900/60 rounded-2xl border border-slate-800">No hay transacciones guardadas en este periodo.</p>';
         return;
       }
 
@@ -346,12 +397,12 @@
         const cat = m[4] || 'General';
 
         container.innerHTML += `
-          <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center space-x-3">
+          <div class="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800/80 flex justify-between items-center space-x-3 shadow-sm hover:border-slate-700 transition-all">
             <div class="min-w-0 flex-1">
-              <p class="text-xs font-bold text-slate-200 truncate">${comercio}</p>
-              <p class="text-[10px] text-slate-400 truncate">${fechaStr} • ${tarj} • <span class="text-indigo-400">${cat}</span></p>
+              <p class="text-xs font-bold text-slate-100 truncate">${comercio}</p>
+              <p class="text-[10px] text-slate-400 mt-0.5 truncate">${fechaStr} • <span class="text-slate-300 font-medium">${tarj}</span> • <span class="text-indigo-400 font-semibold">${cat}</span></p>
             </div>
-            <span class="text-sm font-extrabold text-slate-100 shrink-0">Q${monto.toFixed(2)}</span>
+            <span class="text-sm font-black text-white shrink-0 bg-slate-800/60 px-2.5 py-1 rounded-xl border border-slate-700/40">Q${monto.toFixed(2)}</span>
           </div>
         `;
       });
@@ -365,7 +416,7 @@
     function enviarGasto(e) {
       e.preventDefault();
       const btn = document.getElementById('btnGuardar');
-      btn.innerText = 'Guardando...';
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Guardando...</span>';
       btn.disabled = true;
 
       const payload = {
@@ -385,12 +436,12 @@
         alert('¡Gasto registrado con éxito!');
         document.getElementById('formGasto').reset();
         toggleFormulario();
-        btn.innerText = 'Guardar Registro';
+        btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Guardar Registro</span>';
         btn.disabled = false;
         cargarDatos();
       }).catch(err => {
         alert('Error al guardar: ' + err);
-        btn.innerText = 'Guardar Registro';
+        btn.innerHTML = '<i class="fa-solid fa-check"></i><span>Guardar Registro</span>';
         btn.disabled = false;
       });
     }
