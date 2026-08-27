@@ -116,7 +116,7 @@
           <label class="text-xs font-semibold text-slate-400">Cuenta / Tarjeta</label>
           <select id="cuenta" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
             <option value="BAC">BAC</option>
-            <option value="Cuscatlán">Cuscatlán</option>
+            <option value="Cuscatlan">Cuscatlan</option>
             <option value="Promerica">Promerica</option>
             <option value="Efectivo">Efectivo</option>
           </select>
@@ -220,27 +220,34 @@
     }
 
     function calcularTotalesTarjetas() {
-      let totals = { BAC: 0, Cuscatlán: 0, Promerica: 0, Efectivo: 0 };
+      let totals = { BAC: 0, Cuscatlan: 0, Promerica: 0, Efectivo: 0 };
 
       datosMovimientos.forEach(m => {
         const fechaStr = m[0];
         if (!fechaStr) return;
-        const fechaObj = new Date(fechaStr);
         
-        if ((fechaObj.getMonth() + 1) !== mesActual) return;
+        const partesFecha = fechaStr.toString().split('T')[0].split('/');
+        let mesMov = 0;
+        if (partesFecha.length === 3) {
+          mesMov = parseInt(partesFecha[0]);
+        } else {
+          const d = new Date(fechaStr);
+          if (!isNaN(d)) mesMov = d.getMonth() + 1;
+        }
 
-        const tarjeta = (m[1] || '').toString();
+        if (mesMov !== mesActual) return;
+
+        const tarjeta = (m[1] || '').toString().toLowerCase();
         const monto = parseFloat(m[3]) || 0;
 
-        for (let k in totals) {
-          if (tarjeta.toLowerCase().includes(k.toLowerCase())) {
-            totals[k] += monto;
-          }
-        }
+        if (tarjeta.includes('bac')) totals['BAC'] += monto;
+        else if (tarjeta.includes('cuscatlan')) totals['Cuscatlan'] += monto;
+        else if (tarjeta.includes('promerica')) totals['Promerica'] += monto;
+        else if (tarjeta.includes('efectivo')) totals['Efectivo'] += monto;
       });
 
       document.getElementById('saldobac').innerText = `Q${totals['BAC'].toFixed(2)}`;
-      document.getElementById('saldocuscatlan').innerText = `Q${totals['Cuscatlán'].toFixed(2)}`;
+      document.getElementById('saldocuscatlan').innerText = `Q${totals['Cuscatlan'].toFixed(2)}`;
       document.getElementById('saldopromerica').innerText = `Q${totals['Promerica'].toFixed(2)}`;
       document.getElementById('saldoefectivo').innerText = `Q${totals['Efectivo'].toFixed(2)}`;
     }
@@ -259,12 +266,23 @@
       datosMovimientos.forEach(m => {
         const fechaStr = m[0];
         if (!fechaStr) return;
-        const fechaObj = new Date(fechaStr);
 
-        if ((fechaObj.getMonth() + 1) !== mesActual) return;
+        const partesFecha = fechaStr.toString().split('T')[0].split('/');
+        let mesMov = 0, diaMov = 1;
+        if (partesFecha.length === 3) {
+          mesMov = parseInt(partesFecha[0]);
+          diaMov = parseInt(partesFecha[1]);
+        } else {
+          const d = new Date(fechaStr);
+          if (!isNaN(d)) {
+            mesMov = d.getMonth() + 1;
+            diaMov = d.getDate();
+          }
+        }
 
-        const dia = fechaObj.getDate();
-        const quincenaMov = dia <= 15 ? 1 : 2;
+        if (mesMov !== mesActual) return;
+
+        const quincenaMov = diaMov <= 15 ? 1 : 2;
         if (quincenaMov !== quincenaActual) return;
 
         const cat = (m[4] || 'General').toString().trim().toLowerCase();
@@ -317,8 +335,17 @@
       const movimientosValidos = datosMovimientos.filter(m => {
         const fechaStr = m[0];
         if (!fechaStr) return false;
-        const fechaObj = new Date(fechaStr);
-        if ((fechaObj.getMonth() + 1) !== mesActual) return false;
+
+        const partesFecha = fechaStr.toString().split('T')[0].split('/');
+        let mesMov = 0;
+        if (partesFecha.length === 3) {
+          mesMov = parseInt(partesFecha[0]);
+        } else {
+          const d = new Date(fechaStr);
+          if (!isNaN(d)) mesMov = d.getMonth() + 1;
+        }
+
+        if (mesMov !== mesActual) return false;
 
         const monto = parseFloat(m[3]);
         return !isNaN(monto) && monto > 0;
@@ -330,7 +357,7 @@
       }
 
       movimientosValidos.slice().reverse().forEach(m => {
-        const fecha = m[0] ? new Date(m[0]).toLocaleDateString() : 'N/A';
+        const fecha = m[0] ? m[0].toString().split('T')[0] : 'N/A';
         const tarjeta = m[1] || 'Tarjeta';
         const comercio = m[2] || 'Comercio';
         const monto = parseFloat(m[3]) || 0;
