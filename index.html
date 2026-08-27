@@ -157,34 +157,32 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('selectMes').value = mesActual;
-      // Seleccionar automáticamente la quincena según el día actual de forma predeterminada
       const diaHoy = new Date().getDate();
       cambiarQuincena(diaHoy <= 15 ? 1 : 2);
+      cargarDatos();
     });
 
-    function cargarDatos() {
-      const oldScript = document.getElementById('jsonp-script');
-      if (oldScript) oldScript.remove();
+    async function cargarDatos() {
+      try {
+        const respuesta = await fetch(`${SCRIPT_URL}?_=${new Date().getTime()}`);
+        const data = await respuesta.json();
+        
+        datosPresupuesto = data.presupuesto || [];
+        datosMovimientos = data.movimientos || [];
+        
+        const selectCat = document.getElementById('categoriaSelect');
+        selectCat.innerHTML = '<option value="General">General / Varios</option>';
+        if (data.categorias && data.categorias.length > 0) {
+          data.categorias.forEach(cat => {
+            selectCat.innerHTML += `<option value="${cat}">${cat}</option>`;
+          });
+        }
 
-      const script = document.createElement('script');
-      script.id = 'jsonp-script';
-      script.src = `${SCRIPT_URL}?callback=procesarRespuesta&_=${new Date().getTime()}`;
-      document.body.appendChild(script);
-    }
-
-    function procesarRespuesta(data) {
-      datosPresupuesto = data.presupuesto || [];
-      datosMovimientos = data.movimientos || [];
-      
-      const selectCat = document.getElementById('categoriaSelect');
-      selectCat.innerHTML = '<option value="General">General / Varios</option>';
-      if (data.categorias && data.categorias.length > 0) {
-        data.categorias.forEach(cat => {
-          selectCat.innerHTML += `<option value="${cat}">${cat}</option>`;
-        });
+        filtrarDatos();
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        document.getElementById('contenedorPresupuesto').innerHTML = '<p class="text-center text-red-400 text-sm py-4">Error al sincronizar con Google Sheets.</p>';
       }
-
-      filtrarDatos();
     }
 
     function cambiarPestana(pestana) {
@@ -263,15 +261,12 @@
         if (!fechaStr) return;
         const fechaObj = new Date(fechaStr);
 
-        // Filtrar por Mes
         if ((fechaObj.getMonth() + 1) !== mesActual) return;
 
-        // Filtrar por Quincena (Días 1-15: Q1, Días 16+: Q2)
         const dia = fechaObj.getDate();
         const quincenaMov = dia <= 15 ? 1 : 2;
         if (quincenaMov !== quincenaActual) return;
 
-        // Normalizar categoría para cruzar sin importar mayúsculas, minúsculas o espacios
         const cat = (m[4] || 'General').toString().trim().toLowerCase();
         const monto = parseFloat(m[3]) || 0;
 
@@ -286,10 +281,6 @@
         if (!categoriaOriginal) return;
 
         const categoriaKey = categoriaOriginal.toString().trim().toLowerCase();
-
-        // Estructura de columnas en Presupuesto: 
-        // Q1 -> Ideal (col 1), Gastado (col 2), Disponible (col 3)
-        // Q2 -> Ideal (col 4), Gastado (col 5), Disponible (col 6)
         const ideal = quincenaActual === 1 ? (parseFloat(row[1]) || 0) : (parseFloat(row[4]) || 0);
         const gastadoReal = gastosPorCategoria[categoriaKey] || 0;
         const disponible = ideal - gastadoReal;
