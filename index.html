@@ -223,6 +223,13 @@
       let totals = { BAC: 0, Cuscatlán: 0, Promerica: 0, Efectivo: 0 };
 
       datosMovimientos.forEach(m => {
+        const fechaStr = m[0];
+        if (!fechaStr) return;
+        const fechaObj = new Date(fechaStr);
+        
+        // Validar si pertenece al mes seleccionado
+        if ((fechaObj.getMonth() + 1) !== mesActual) return;
+
         const tarjeta = (m[1] || '').toString();
         const monto = parseFloat(m[3]) || 0;
 
@@ -248,16 +255,47 @@
         return;
       }
 
+      // Calcular gastos reales del mes y quincena seleccionados por categoría
+      let gastosPorCategoria = {};
+
+      datosMovimientos.forEach(m => {
+        const fechaStr = m[0];
+        if (!fechaStr) return;
+        const fechaObj = new Date(fechaStr);
+
+        // Filtrar por Mes
+        if ((fechaObj.getMonth() + 1) !== mesActual) return;
+
+        // Filtrar por Quincena (Q1: días 1 al 15, Q2: día 16 en adelante)
+        const dia = fechaObj.getDate();
+        const quincenaMov = dia <= 15 ? 1 : 2;
+        if (quincenaMov !== quincenaActual) return;
+
+        const cat = (m[4] || 'General').toString().trim();
+        const monto = parseFloat(m[3]) || 0;
+
+        // Solo sumar si es un gasto real (ignorar ingresos/abonos si restan o se manejan aparte, o sumar si aplica)
+        if (!gastosPorCategoria[cat]) {
+          gastosPorCategoria[cat] = 0;
+        }
+        gastosPorCategoria[cat] += monto;
+      });
+
       datosPresupuesto.forEach(row => {
         const categoria = row[0];
         if (!categoria) return;
 
-        const ideal = quincenaActual === 1 ? parseFloat(row[1]) || 0 : parseFloat(row[4]) || 0;
-        const gastado = quincenaActual === 1 ? parseFloat(row[2]) || 0 : parseFloat(row[5]) || 0;
-        const disponible = quincenaActual === 1 ? parseFloat(row[3]) || 0 : parseFloat(row[6]) || 0;
+        // Columnas según tu estructura de Google Sheets:
+        // Q1: Ideal col index 1 (row[1]), Gastado col index 2 (row[2]), Disponible col index 3 (row[3])
+        // Q2: Ideal col index 4 (row[4]), Gastado col index 5 (row[5]), Disponible col index 6 (row[6])
+        const ideal = quincenaActual === 1 ? (parseFloat(row[1]) || 0) : (parseFloat(row[4]) || 0);
+        
+        // Usar el gastado real calculado de los movimientos de esa categoría, o el de la hoja si prefieres
+        const gastadoReal = gastosPorCategoria[categoria] || 0;
+        const disponible = ideal - gastadoReal;
 
-        if (ideal > 0 || gastado > 0) {
-          const porcentaje = ideal > 0 ? Math.min(100, Math.round((gastado / ideal) * 100)) : 0;
+        if (ideal > 0 || gastadoReal > 0) {
+          const porcentaje = ideal > 0 ? Math.min(100, Math.round((gastadoReal / ideal) * 100)) : 0;
           const esNegativo = disponible < 0;
 
           container.innerHTML += `
@@ -272,7 +310,7 @@
                 <div class="${esNegativo ? 'bg-red-500' : 'bg-emerald-500'} h-full transition-all duration-300" style="width: ${porcentaje}%"></div>
               </div>
               <div class="flex justify-between text-[11px] text-slate-400">
-                <span>Gastado: Q${gastado.toFixed(2)}</span>
+                <span>Gastado: Q${gastadoReal.toFixed(2)}</span>
                 <span>Ideal: Q${ideal.toFixed(2)}</span>
               </div>
             </div>
@@ -285,13 +323,19 @@
       const container = document.getElementById('contenedorTarjetas');
       container.innerHTML = '';
 
+      // Filtrar movimientos del mes actual para la pestaña de historial
       const movimientosValidos = datosMovimientos.filter(m => {
+        const fechaStr = m[0];
+        if (!fechaStr) return false;
+        const fechaObj = new Date(fechaStr);
+        if ((fechaObj.getMonth() + 1) !== mesActual) return false;
+
         const monto = parseFloat(m[3]);
         return !isNaN(monto) && monto > 0;
       });
 
       if (movimientosValidos.length === 0) {
-        container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay gastos en tarjetas registrados.</p>`;
+        container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay gastos registrados en este mes.</p>`;
         return;
       }
 
