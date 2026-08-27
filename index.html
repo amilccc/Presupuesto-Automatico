@@ -2,149 +2,550 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Control de Gastos v3</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-    .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .nav-bar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-    .nav-btn { background: #e9ecef; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-    .nav-btn.active, .nav-btn:hover { background: #007bff; color: #fff; }
-    .vista-seccion { display: none; }
-    .vista-seccion.activo { display: block; }
-    .card-selector { display: flex; gap: 10px; margin-bottom: 15px; }
-    .filter-btn { background: #6c757d; color: #fff; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-    .filter-btn:hover { background: #5a6268; }
-    .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    .data-table th, .data-table td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
-    .data-table th { background: #f8f9fa; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mi Presupuesto V3</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-12 font-sans">
 
-<div class="container">
-  <!-- Barra de Navegación -->
-  <div class="nav-bar">
-    <button onclick="cambiarVista('general')" class="nav-btn active" id="btn-general">General / Movimientos</button>
-    <button onclick="cambiarVista('cortes')" class="nav-btn" id="btn-cortes">Cortes de Tarjetas</button>
-  </div>
+  <div class="max-w-md mx-auto space-y-5">
+    <!-- Encabezado -->
+    <header class="text-center py-1">
+      <div class="flex justify-center items-center gap-2">
+        <h1 class="text-2xl font-bold text-emerald-400">📊 Control Financiero</h1>
+        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full">V3</span>
+      </div>
+      <p class="text-xs text-slate-400 mt-0.5">Sincronizado con Google Sheets</p>
+    </header>
 
-  <!-- Vista General (Tus vistas anteriores simuladas aquí) -->
-  <div id="vista-general" class="vista-seccion activo">
-    <h2>Resumen General y Movimientos</h2>
-    <p>Aquí se cargan tus vistas habituales de la web app.</p>
-  </div>
-
-  <!-- Nueva Vista: Cortes de Tarjetas (Versión 3) -->
-  <div id="vista-cortes" class="vista-seccion">
-    <h2>Cortes de Tarjetas</h2>
-    
-    <div class="card-selector">
-      <button onclick="filtrarCorte('BAC')" class="filter-btn">BAC (Corte 18)</button>
-      <button onclick="filtrarCorte('Cuscatlan')" class="filter-btn">Cuscatlán (Corte 15)</button>
-      <button onclick="filtrarCorte('Promerica')" class="filter-btn">Promerica (Corte 26)</button>
+    <!-- Resumen por Cuentas / Tarjetas -->
+    <div class="grid grid-cols-2 gap-2" id="gridSaldos">
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto BAC</p>
+        <p class="text-base font-bold text-emerald-400" id="saldobac">Q0.00</p>
+      </div>
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Cuscatlán</p>
+        <p class="text-base font-bold text-emerald-400" id="saldocuscatlan">Q0.00</p>
+      </div>
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Promerica</p>
+        <p class="text-base font-bold text-emerald-400" id="saldopromerica">Q0.00</p>
+      </div>
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Efectivo</p>
+        <p class="text-base font-bold text-emerald-400" id="saldoefectivo">Q0.00</p>
+      </div>
     </div>
 
-    <div id="resumen-corte" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-      <p><strong>Periodo actual:</strong> <span id="corte-periodo">-</span></p>
-      <h3>Total del Corte: $<span id="corte-total">0.00</span></h3>
+    <!-- Navegación de Pestañas (Diseño original adaptado para 3 opciones) -->
+    <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
+      <button id="tabPresupuesto" onclick="cambiarPestana('presupuesto')" class="py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition">📊 Presupuesto</button>
+      <button id="tabTarjetas" onclick="cambiarPestana('tarjetas')" class="py-2 text-xs font-bold rounded-xl text-slate-400 transition">💳 Gastos</button>
+      <button id="tabCortes" onclick="cambiarPestana('cortes')" class="py-2 text-xs font-bold rounded-xl text-slate-400 transition">✂️ Cortes</button>
     </div>
 
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Comercio</th>
-          <th>Monto</th>
-          <th>Categoría</th>
-        </tr>
-      </thead>
-      <tbody id="cuerpo-tabla-corte">
-        <tr><td colspan="4" style="text-align:center;">Cargando datos...</td></tr>
-      </tbody>
-    </table>
+    <!-- Filtros: Mes y Quincena -->
+    <div id="panelFiltrosMes" class="bg-slate-900 p-3 rounded-2xl border border-slate-800 space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1 px-1">Mes</label>
+          <select id="selectMes" onchange="filtrarDatos()" class="w-full bg-slate-800 border border-slate-700 text-white rounded-xl p-2 text-xs outline-none focus:border-emerald-500 font-medium">
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1 px-1">Quincena</label>
+          <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700/50">
+            <button id="btnQ1" onclick="cambiarQuincena(1)" class="w-1/2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white shadow transition">1ra Q</button>
+            <button id="btnQ2" onclick="cambiarQuincena(2)" class="w-1/2 py-1 text-[11px] font-bold rounded-lg text-slate-400 transition">2da Q</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA 1: Dashboard Presupuesto -->
+    <div id="vistaPresupuesto" class="space-y-3">
+      <div class="flex justify-between items-center px-1">
+        <h2 class="text-sm font-bold text-slate-300">Presupuesto por Categoría</h2>
+        <button onclick="cargarDatos()" class="text-xs text-emerald-400 hover:text-emerald-300">🔄 Actualizar</button>
+      </div>
+      <div id="contenedorPresupuesto" class="space-y-3">
+        <p class="text-center text-slate-500 text-sm py-4">Cargando presupuesto...</p>
+      </div>
+    </div>
+
+    <!-- VISTA 2: Gastos por Tarjeta -->
+    <div id="vistaTarjetas" class="space-y-3 hidden">
+      <div class="flex justify-between items-center px-1">
+        <h2 class="text-sm font-bold text-slate-300">Historial de Gastos</h2>
+        <button onclick="cargarDatos()" class="text-xs text-emerald-400 hover:text-emerald-300">🔄 Actualizar</button>
+      </div>
+      <div id="contenedorTarjetas" class="space-y-2">
+        <p class="text-center text-slate-500 text-sm py-4">Cargando lista de gastos...</p>
+      </div>
+    </div>
+
+    <!-- VISTA 3: Cortes de Tarjetas -->
+    <div id="vistaCortes" class="space-y-3 hidden">
+      <div class="flex justify-between items-center px-1">
+        <h2 class="text-sm font-bold text-slate-300">Cortes de Tarjetas</h2>
+        <button onclick="cargarDatos()" class="text-xs text-emerald-400 hover:text-emerald-300">🔄 Actualizar</button>
+      </div>
+
+      <!-- Selector de Tarjeta para Cortes -->
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="seleccionarTarjetaCorte('BAC')" id="btnCorteBAC" class="py-2 px-1 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition">BAC (18)</button>
+        <button onclick="seleccionarTarjetaCorte('Cuscatlan')" id="btnCorteCuscatlan" class="py-2 px-1 text-xs font-bold rounded-xl bg-slate-800 text-slate-400 border border-slate-700 transition">Cuscatlán (15)</button>
+        <button onclick="seleccionarTarjetaCorte('Promerica')" id="btnCortePromerica" class="py-2 px-1 text-xs font-bold rounded-xl bg-slate-800 text-slate-400 border border-slate-700 transition">Promerica (26)</button>
+      </div>
+
+      <!-- Resumen del Ciclo Activo -->
+      <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2 text-center">
+        <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Periodo de Facturación</p>
+        <p class="text-xs font-bold text-slate-200" id="cortePeriodoTexto">-</p>
+        <div class="pt-2 border-t border-slate-800">
+          <p class="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Total Acumulado del Corte</p>
+          <p class="text-2xl font-extrabold text-emerald-400" id="corteTotalMonto">Q0.00</p>
+        </div>
+      </div>
+
+      <!-- Lista de Movimientos del Corte -->
+      <div id="contenedorCortesMovimientos" class="space-y-2">
+        <p class="text-center text-slate-500 text-sm py-4">Selecciona una tarjeta...</p>
+      </div>
+    </div>
+
+    <!-- Formulario para Movimientos Manuales -->
+    <div class="bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl space-y-4">
+      <h2 class="text-base font-bold text-white border-b border-slate-800 pb-2">➕ Registrar Pago / Abono</h2>
+      
+      <form id="formMovimiento" onsubmit="guardarMovimiento(event)" class="space-y-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-400">Tipo de Movimiento</label>
+          <select id="tipo" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
+            <option value="Gasto Tarjeta">Gasto Tarjeta</option>
+            <option value="Gasto Efectivo">Gasto Efectivo</option>
+            <option value="Abono a Tarjeta">Abono a Tarjeta</option>
+            <option value="Ingreso">Ingreso / Pago</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400">Cuenta / Tarjeta</label>
+          <select id="cuenta" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
+            <option value="BAC">BAC</option>
+            <option value="Cuscatlan">Cuscatlan</option>
+            <option value="Promerica">Promerica</option>
+            <option value="Efectivo">Efectivo</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400">Categoría del Presupuesto</label>
+          <select id="categoriaSelect" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
+            <option value="General">General / Varios</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400">Descripción / Establecimiento</label>
+          <input type="text" id="descripcion" placeholder="Ej. Compra súper, Pago recibo" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
+        </div>
+
+        <div>
+          <label class="text-xs font-semibold text-slate-400">Monto (Q)</label>
+          <input type="number" step="0.01" id="monto" placeholder="0.00" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
+        </div>
+
+        <button type="submit" id="btnGuardar" class="w-full bg-emerald-500 hover:bg-emerald-600 font-bold py-3.5 rounded-xl transition text-slate-950 mt-2 text-sm shadow-lg shadow-emerald-500/20">
+          Guardar en Google Sheets
+        </button>
+      </form>
+    </div>
   </div>
-</div>
 
-<script>
-  let tarjetaSeleccionadaActual = 'BAC';
-  window.movimientosGlobales = []; // Aquí se almacenarán los movimientos descargados del Apps Script
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyA8wVeWY5vKsmBtl9ccnd5uqDxL4rrlbAqGTvKS7B_rlkTy7fxlrE-K8JDK1dpHQ/exec';
 
-  // Simulación de carga inicial desde tu Apps Script
-  function cargarDatosApp() {
-    fetch('TU_URL_DE_APPS_SCRIPT_AQUI') // Reemplaza por tu URL /exec
-      .then(res => res.json())
-      .then(data => {
-        window.movimientosGlobales = data.movimientos;
-        if(document.getElementById('vista-cortes').classList.contains('activo')) {
-          filtrarCorte(tarjetaSeleccionadaActual);
-        }
-      })
-      .catch(err => console.error("Error cargando datos:", err));
-  }
+    let datosPresupuesto = [];
+    let datosMovimientos = [];
+    let quincenaActual = 1;
+    let mesActual = new Date().getMonth() + 1;
+    let pestanaActiva = 'presupuesto';
+    let tarjetaCorteActual = 'BAC';
 
-  function cambiarVista(vista) {
-    document.querySelectorAll('.vista-seccion').forEach(el => el.classList.remove('activo'));
-    document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('selectMes').value = mesActual;
+      const diaHoy = new Date().getDate();
+      cambiarQuincena(diaHoy <= 15 ? 1 : 2);
+      cargarDatos();
+    });
 
-    if(vista === 'general') {
-      document.getElementById('vista-general').classList.add('activo');
-      document.getElementById('btn-general').classList.add('active');
-    } else if(vista === 'cortes') {
-      document.getElementById('vista-cortes').classList.add('activo');
-      document.getElementById('btn-cortes').classList.add('active');
-      filtrarCorte(tarjetaSeleccionadaActual);
-    }
-  }
-
-  function filtrarCorte(nombreTarjeta) {
-    tarjetaSeleccionadaActual = nombreTarjeta;
-    
-    const cortes = { 'BAC': 18, 'Cuscatlan': 15, 'Promerica': 26 };
-    const diaCorte = cortes[nombreTarjeta];
-    const hoy = new Date();
-    let anioActual = hoy.getFullYear();
-    let mesActual = hoy.getMonth();
-    
-    let fechaInicio, fechaFin;
-    
-    if (hoy.getDate() > diaCorte) {
-      fechaInicio = new Date(anioActual, mesActual, diaCorte + 1);
-      fechaFin = new Date(anioActual, mesActual + 1, diaCorte);
-    } else {
-      fechaInicio = new Date(anioActual, mesActual - 1, diaCorte + 1);
-      fechaFin = new Date(anioActual, mesActual, diaCorte);
-    }
-
-    document.getElementById('corte-periodo').innerText = 
-      `${fechaInicio.toLocaleDateString()} al ${fechaFin.toLocaleDateString()}`;
-
-    let totalCorte = 0;
-    let htmlTabla = '';
-    
-    if (window.movimientosGlobales) {
-      window.movimientosGlobales.forEach(row => {
-        let [fechaStr, tarjetaMov, comercio, monto, categoria] = row;
+    async function cargarDatos() {
+      try {
+        const respuesta = await fetch(`${SCRIPT_URL}?_=${new Date().getTime()}`);
+        const data = await respuesta.json();
         
-        if (tarjetaMov && tarjetaMov.toLowerCase().includes(nombreTarjeta.toLowerCase())) {
-          let fechaMov = new Date(fechaStr);
+        datosPresupuesto = data.presupuesto || [];
+        datosMovimientos = data.movimientos || [];
+        
+        const selectCat = document.getElementById('categoriaSelect');
+        selectCat.innerHTML = '<option value="General">General / Varios</option>';
+        if (data.categorias && data.categorias.length > 0) {
+          data.categorias.forEach(cat => {
+            selectCat.innerHTML += `<option value="${cat}">${cat}</option>`;
+          });
+        }
+
+        filtrarDatos();
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        document.getElementById('contenedorPresupuesto').innerHTML = '<p class="text-center text-red-400 text-sm py-4">Error al sincronizar con Google Sheets.</p>';
+      }
+    }
+
+    function cambiarPestana(pestana) {
+      pestanaActiva = pestana;
+      const tabP = document.getElementById('tabPresupuesto');
+      const tabT = document.getElementById('tabTarjetas');
+      const tabC = document.getElementById('tabCortes');
+      const vistaP = document.getElementById('vistaPresupuesto');
+      const vistaT = document.getElementById('vistaTarjetas');
+      const vistaC = document.getElementById('vistaCortes');
+      const panelFiltros = document.getElementById('panelFiltrosMes');
+
+      // Resetear clases de pestañas al diseño original inactivo
+      [tabP, tabT, tabC].forEach(t => t.className = "py-2 text-xs font-bold rounded-xl text-slate-400 transition");
+      [vistaP, vistaT, vistaC].forEach(v => v.classList.add('hidden'));
+      panelFiltros.classList.remove('hidden');
+
+      if (pestana === 'presupuesto') {
+        tabP.className = "py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition";
+        vistaP.classList.remove('hidden');
+      } else if (pestana === 'tarjetas') {
+        tabT.className = "py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition";
+        vistaT.classList.remove('hidden');
+      } else if (pestana === 'cortes') {
+        tabC.className = "py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition";
+        vistaC.classList.remove('hidden');
+        panelFiltros.classList.add('hidden'); // Ocultar filtros de mes/quincena ya que los cortes usan su propio ciclo
+        renderCortes();
+      }
+    }
+
+    function cambiarQuincena(q) {
+      quincenaActual = q;
+      document.getElementById('btnQ1').className = q === 1 ? "w-1/2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white shadow transition" : "w-1/2 py-1 text-[11px] font-bold rounded-lg text-slate-400 transition";
+      document.getElementById('btnQ2').className = q === 2 ? "w-1/2 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white shadow transition" : "w-1/2 py-1 text-[11px] font-bold rounded-lg text-slate-400 transition";
+      filtrarDatos();
+    }
+
+    function filtrarDatos() {
+      mesActual = parseInt(document.getElementById('selectMes').value);
+      renderPresupuesto();
+      renderTarjetas();
+      calcularTotalesTarjetas();
+      if (pestanaActiva === 'cortes') {
+        renderCortes();
+      }
+    }
+
+    function calcularTotalesTarjetas() {
+      let totals = { BAC: 0, Cuscatlan: 0, Promerica: 0, Efectivo: 0 };
+
+      datosMovimientos.forEach(m => {
+        const fechaStr = m[0];
+        if (!fechaStr) return;
+        
+        const partesFecha = fechaStr.toString().split('T')[0].split('/');
+        let mesMov = 0;
+        if (partesFecha.length === 3) {
+          mesMov = parseInt(partesFecha[0]);
+        } else {
+          const d = new Date(fechaStr);
+          if (!isNaN(d)) mesMov = d.getMonth() + 1;
+        }
+
+        if (mesMov !== mesActual) return;
+
+        const tarjeta = (m[1] || '').toString().toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
           
-          if (fechaMov >= fechaInicio && fechaMov <= fechaFin) {
-            totalCorte += parseFloat(monto) || 0;
-            htmlTabla += `<tr>
-              <td>${fechaStr}</td>
-              <td>${comercio}</td>
-              <td>$${parseFloat(monto).toFixed(2)}</td>
-              <td>${categoria}</td>
-            </tr>`;
+        const monto = parseFloat(m[3]) || 0;
+
+        if (tarjeta.includes('bac')) {
+          totals['BAC'] += monto;
+        } else if (tarjeta.includes('cuscatlan')) {
+          totals['Cuscatlan'] += monto;
+        } else if (tarjeta.includes('promerica')) {
+          totals['Promerica'] += monto;
+        } else if (tarjeta.includes('efectivo')) {
+          totals['Efectivo'] += monto;
+        }
+      });
+
+      document.getElementById('saldobac').innerText = `Q${totals['BAC'].toFixed(2)}`;
+      document.getElementById('saldocuscatlan').innerText = `Q${totals['Cuscatlan'].toFixed(2)}`;
+      document.getElementById('saldopromerica').innerText = `Q${totals['Promerica'].toFixed(2)}`;
+      document.getElementById('saldoefectivo').innerText = `Q${totals['Efectivo'].toFixed(2)}`;
+    }
+
+    function renderPresupuesto() {
+      const container = document.getElementById('contenedorPresupuesto');
+      container.innerHTML = '';
+
+      if (datosPresupuesto.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-center text-sm py-4">No hay datos en el presupuesto.</p>';
+        return;
+      }
+
+      let gastosPorCategoria = {};
+
+      datosMovimientos.forEach(m => {
+        const fechaStr = m[0];
+        if (!fechaStr) return;
+
+        const partesFecha = fechaStr.toString().split('T')[0].split('/');
+        let mesMov = 0, diaMov = 1;
+        if (partesFecha.length === 3) {
+          mesMov = parseInt(partesFecha[0]);
+          diaMov = parseInt(partesFecha[1]);
+        } else {
+          const d = new Date(fechaStr);
+          if (!isNaN(d)) {
+            mesMov = d.getMonth() + 1;
+            diaMov = d.getDate();
           }
+        }
+
+        if (mesMov !== mesActual) return;
+
+        const quincenaMov = diaMov <= 15 ? 1 : 2;
+        if (quincenaMov !== quincenaActual) return;
+
+        const cat = (m[4] || 'General').toString().trim().toLowerCase();
+        const monto = parseFloat(m[3]) || 0;
+
+        if (!gastosPorCategoria[cat]) {
+          gastosPorCategoria[cat] = 0;
+        }
+        gastosPorCategoria[cat] += monto;
+      });
+
+      datosPresupuesto.forEach(row => {
+        const categoriaOriginal = row[0];
+        if (!categoriaOriginal) return;
+
+        const categoriaKey = categoriaOriginal.toString().trim().toLowerCase();
+        const ideal = quincenaActual === 1 ? (parseFloat(row[1]) || 0) : (parseFloat(row[4]) || 0);
+        const gastadoReal = gastosPorCategoria[categoriaKey] || 0;
+        const disponible = ideal - gastadoReal;
+
+        if (ideal > 0 || gastadoReal > 0) {
+          const porcentaje = ideal > 0 ? Math.min(100, Math.round((gastadoReal / ideal) * 100)) : 0;
+          const esNegativo = disponible < 0;
+
+          container.innerHTML += `
+            <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-2">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-slate-200 text-sm">${categoriaOriginal}</span>
+                <span class="text-xs font-bold ${esNegativo ? 'text-red-400' : 'text-emerald-400'}">
+                  Disp: Q${disponible.toFixed(2)}
+                </span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="${esNegativo ? 'bg-red-500' : 'bg-emerald-500'} h-full transition-all duration-300" style="width: ${porcentaje}%"></div>
+              </div>
+              <div class="flex justify-between text-[11px] text-slate-400">
+                <span>Gastado: Q${gastadoReal.toFixed(2)}</span>
+                <span>Ideal: Q${ideal.toFixed(2)}</span>
+              </div>
+            </div>
+          `;
         }
       });
     }
 
-    document.getElementById('corte-total').innerText = totalCorte.toFixed(2);
-    document.getElementById('cuerpo-tabla-corte').innerHTML = htmlTabla || '<tr><td colspan="4" style="text-align:center;">No hay consumos en este ciclo.</td></tr>';
-  }
-</script>
+    function renderTarjetas() {
+      const container = document.getElementById('contenedorTarjetas');
+      container.innerHTML = '';
 
+      const movimientosValidos = datosMovimientos.filter(m => {
+        const fechaStr = m[0];
+        if (!fechaStr) return false;
+
+        const partesFecha = fechaStr.toString().split('T')[0].split('/');
+        let mesMov = 0;
+        if (partesFecha.length === 3) {
+          mesMov = parseInt(partesFecha[0]);
+        } else {
+          const d = new Date(fechaStr);
+          if (!isNaN(d)) mesMov = d.getMonth() + 1;
+        }
+
+        if (mesMov !== mesActual) return false;
+
+        const monto = parseFloat(m[3]);
+        return !isNaN(monto) && monto > 0;
+      });
+
+      if (movimientosValidos.length === 0) {
+        container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay gastos registrados en este mes.</p>`;
+        return;
+      }
+
+      movimientosValidos.slice().reverse().forEach(m => {
+        const fecha = m[0] ? m[0].toString().split('T')[0] : 'N/A';
+        const tarjeta = m[1] || 'Tarjeta';
+        const comercio = m[2] || 'Comercio';
+        const monto = parseFloat(m[3]) || 0;
+        const cat = m[4] || '';
+
+        container.innerHTML += `
+          <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-200 text-sm">${comercio}</span>
+                <span class="text-[10px] bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-md">${tarjeta}</span>
+              </div>
+              <p class="text-[11px] text-slate-400">${fecha} ${cat ? '• ' + cat : ''}</p>
+            </div>
+            <span class="font-bold text-sm text-red-400">-Q${monto.toFixed(2)}</span>
+          </div>
+        `;
+      });
+    }
+
+    function seleccionarTarjetaCorte(tarjeta) {
+      tarjetaCorteActual = tarjeta;
+      ['BAC', 'Cuscatlan', 'Promerica'].forEach(t => {
+        const btn = document.getElementById(`btnCorte${t}`);
+        if (t === tarjeta) {
+          btn.className = "py-2 px-1 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition";
+        } else {
+          btn.className = "py-2 px-1 text-xs font-bold rounded-xl bg-slate-800 text-slate-400 border border-slate-700 transition";
+        }
+      });
+      renderCortes();
+    }
+
+    function renderCortes() {
+      const container = document.getElementById('contenedorCortesMovimientos');
+      container.innerHTML = '';
+
+      const cortes = { 'BAC': 18, 'Cuscatlan': 15, 'Promerica': 26 };
+      const diaCorte = cortes[tarjetaCorteActual];
+      const hoy = new Date();
+      let anioActual = hoy.getFullYear();
+      let mesActualSistema = hoy.getMonth();
+      
+      let fechaInicio, fechaFin;
+      
+      if (hoy.getDate() > diaCorte) {
+        fechaInicio = new Date(anioActual, mesActualSistema, diaCorte + 1);
+        fechaFin = new Date(anioActual, mesActualSistema + 1, diaCorte);
+      } else {
+        fechaInicio = new Date(anioActual, mesActualSistema - 1, diaCorte + 1);
+        fechaFin = new Date(anioActual, mesActualSistema, diaCorte);
+      }
+
+      document.getElementById('cortePeriodoTexto').innerText = 
+        `${fechaInicio.toLocaleDateString()} al ${fechaFin.toLocaleDateString()}`;
+
+      let totalCorte = 0;
+      let htmlMovimientos = '';
+
+      datosMovimientos.forEach(m => {
+        const fechaStr = m[0];
+        const tarjetaMov = (m[1] || '').toString();
+        const comercio = m[2] || 'Comercio';
+        const monto = parseFloat(m[3]) || 0;
+        const cat = m[4] || '';
+
+        if (!fechaStr) return;
+
+        if (tarjetaMov.toLowerCase().includes(tarjetaCorteActual.toLowerCase())) {
+          let fechaMov;
+          const partes = fechaStr.toString().split('T')[0].split('/');
+          if (partes.length === 3) {
+            fechaMov = new Date(partes[2], partes[0] - 1, partes[1]);
+          } else {
+            fechaMov = new Date(fechaStr);
+          }
+
+          if (!isNaN(fechaMov) && fechaMov >= fechaInicio && fechaMov <= fechaFin) {
+            totalCorte += monto;
+            const fechaFormateada = fechaMov.toISOString().split('T')[0];
+            htmlMovimientos += `
+              <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-200 text-sm">${comercio}</span>
+                    <span class="text-[10px] bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-md">${tarjetaMov}</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400">${fechaFormateada} ${cat ? '• ' + cat : ''}</p>
+                </div>
+                <span class="font-bold text-sm text-red-400">-Q${monto.toFixed(2)}</span>
+              </div>
+            `;
+          }
+        }
+      });
+
+      document.getElementById('corteTotalMonto').innerText = `Q${totalCorte.toFixed(2)}`;
+
+      if (htmlMovimientos === '') {
+        container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay consumos registrados en este ciclo de corte.</p>`;
+      } else {
+        container.innerHTML = htmlMovimientos;
+      }
+    }
+
+    async function guardarMovimiento(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnGuardar');
+      btn.innerText = 'Guardando...';
+      btn.disabled = true;
+
+      const payload = {
+        tipo: document.getElementById('tipo').value,
+        tarjeta: document.getElementById('cuenta').value,
+        categoria: document.getElementById('categoriaSelect').value,
+        comercio: document.getElementById('descripcion').value,
+        monto: document.getElementById('monto').value
+      };
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload)
+        });
+
+        alert('¡Movimiento guardado con éxito!');
+        document.getElementById('formMovimiento').reset();
+        setTimeout(cargarDatos, 1500);
+      } catch (err) {
+        alert('Error al guardar el movimiento.');
+      } finally {
+        btn.innerText = 'Guardar en Google Sheets';
+        btn.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
