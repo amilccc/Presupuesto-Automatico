@@ -122,7 +122,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyvNzachwGy7VoQOHtd7fPm7-uXwBs_TDCJkpb93Iwie9B8A8oHcwX6vigQbSaYqotf/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHlGKS-3U6gWVRj4Gnfi6Fc6Nos1saU8CvzXfsb2S43MJYg_E7hdEwGMADH7Ph4Us/exec';
 
     let datosPresupuesto = [];
     let datosMovimientos = [];
@@ -229,25 +229,16 @@
       const container = document.getElementById('contenedorTarjetas');
       container.innerHTML = '';
 
-      const textoQuincenaBuscada = quincenaActual === 1 ? "1ra Quincena" : "2da Quincena";
-
-      const movimientosFiltrados = datosMovimientos.filter(m => {
-        const qMov = m[6];
-        const mesMov = parseInt(m[7]);
-        return mesMov === mesActual && qMov === textoQuincenaBuscada;
-      });
-
-      if (movimientosFiltrados.length === 0) {
-        container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay gastos en tarjetas para la ${textoQuincenaBuscada}.</p>`;
+      if (datosMovimientos.length === 0) {
+        container.innerHTML = `<p class="text-slate-500 text-center text-sm py-4">No hay gastos en tarjetas registrados.</p>`;
         return;
       }
 
-      movimientosFiltrados.reverse().forEach(m => {
+      datosMovimientos.slice().reverse().forEach(m => {
         const fecha = m[0] ? new Date(m[0]).toLocaleDateString() : 'N/A';
-        const tarjeta = m[2] || 'Tarjeta';
-        const comercio = m[3] || 'Comercio';
-        const monto = parseFloat(m[4]) || 0;
-        const categoria = m[5] || 'General';
+        const tarjeta = m[1] || 'Tarjeta';
+        const comercio = m[2] || 'Comercio';
+        const monto = parseFloat(m[3]) || 0;
 
         container.innerHTML += `
           <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
@@ -256,7 +247,7 @@
                 <span class="font-bold text-slate-200 text-sm">${comercio}</span>
                 <span class="text-[10px] bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-md">${tarjeta}</span>
               </div>
-              <p class="text-[11px] text-slate-400">${fecha} • ${categoria}</p>
+              <p class="text-[11px] text-slate-400">${fecha}</p>
             </div>
             <span class="font-bold text-sm text-red-400">-Q${monto.toFixed(2)}</span>
           </div>
@@ -272,9 +263,9 @@
 
       const payload = {
         tipo: document.getElementById('tipo').value,
-        cuenta: document.getElementById('cuenta').value,
+        tarjeta: document.getElementById('cuenta').value,
         categoria: document.getElementById('categoria').value,
-        descripcion: document.getElementById('descripcion').value,
+        comercio: document.getElementById('descripcion').value,
         monto: document.getElementById('monto').value
       };
 
