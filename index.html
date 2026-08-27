@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mi Presupuesto</title>
+  <title>Mi Presupuesto V2</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen p-4 pb-12 font-sans">
@@ -11,9 +11,32 @@
   <div class="max-w-md mx-auto space-y-5">
     <!-- Encabezado -->
     <header class="text-center py-1">
-      <h1 class="text-2xl font-bold text-emerald-400">📊 Control Financiero</h1>
+      <div class="flex justify-center items-center gap-2">
+        <h1 class="text-2xl font-bold text-emerald-400">📊 Control Financiero</h1>
+        <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full">V2</span>
+      </div>
       <p class="text-xs text-slate-400 mt-0.5">Sincronizado con Google Sheets</p>
     </header>
+
+    <!-- Resumen por Cuentas / Tarjetas -->
+    <div class="grid grid-cols-2 gap-2" id="gridSaldos">
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto BAC</p>
+        <p class="text-base font-bold text-emerald-400" id="saldobac">Q0.00</p>
+      </div>
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Cuscatlán</p>
+        <p class="text-base font-bold text-emerald-400" id="saldocuscatlan">Q0.00</p>
+      </div>
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Promerica</p>
+        <p class="text-base font-bold text-emerald-400" id="saldopromerica">Q0.00</p>
+      </div>
+      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <p class="text-[10px] font-semibold text-slate-400 uppercase">Gasto Efectivo</p>
+        <p class="text-base font-bold text-emerald-400" id="saldoefectivo">Q0.00</p>
+      </div>
+    </div>
 
     <!-- Navegación de Pestañas -->
     <div class="flex bg-slate-900 p-1 rounded-2xl border border-slate-800">
@@ -66,7 +89,7 @@
     <!-- VISTA 2: Gastos por Tarjeta -->
     <div id="vistaTarjetas" class="space-y-3 hidden">
       <div class="flex justify-between items-center px-1">
-        <h2 class="text-sm font-bold text-slate-300">Historial de Gastos por Tarjeta</h2>
+        <h2 class="text-sm font-bold text-slate-300">Historial de Gastos</h2>
         <button onclick="cargarDatos()" class="text-xs text-emerald-400 hover:text-emerald-300">🔄 Actualizar</button>
       </div>
       <div id="contenedorTarjetas" class="space-y-2">
@@ -101,7 +124,9 @@
 
         <div>
           <label class="text-xs font-semibold text-slate-400">Categoría del Presupuesto</label>
-          <input type="text" id="categoria" placeholder="Ej. Agua, Luz, Supermercado" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500" required>
+          <select id="categoriaSelect" class="w-full mt-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-3 text-sm outline-none focus:border-emerald-500">
+            <option value="General">General / Varios</option>
+          </select>
         </div>
 
         <div>
@@ -122,7 +147,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHlGKS-3U6gWVRj4Gnfi6Fc6Nos1saU8CvzXfsb2S43MJYg_E7hdEwGMADH7Ph4Us/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyA8wVeWY5vKsmBtl9ccnd5uqDxL4rrlbAqGTvKS7B_rlkTy7fxlrE-K8JDK1dpHQ/exec';
 
     let datosPresupuesto = [];
     let datosMovimientos = [];
@@ -147,6 +172,15 @@
     function procesarRespuesta(data) {
       datosPresupuesto = data.presupuesto || [];
       datosMovimientos = data.movimientos || [];
+      
+      const selectCat = document.getElementById('categoriaSelect');
+      selectCat.innerHTML = '<option value="General">General / Varios</option>';
+      if (data.categorias && data.categorias.length > 0) {
+        data.categorias.forEach(cat => {
+          selectCat.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+      }
+
       filtrarDatos();
     }
 
@@ -181,6 +215,27 @@
       mesActual = parseInt(document.getElementById('selectMes').value);
       renderPresupuesto();
       renderTarjetas();
+      calcularTotalesTarjetas();
+    }
+
+    function calcularTotalesTarjetas() {
+      let totals = { BAC: 0, Cuscatlán: 0, Promerica: 0, Efectivo: 0 };
+
+      datosMovimientos.forEach(m => {
+        const tarjeta = (m[1] || '').toString();
+        const monto = parseFloat(m[3]) || 0;
+
+        for (let k in totals) {
+          if (tarjeta.toLowerCase().includes(k.toLowerCase())) {
+            totals[k] += monto;
+          }
+        }
+      });
+
+      document.getElementById('saldobac').innerText = `Q${totals['BAC'].toFixed(2)}`;
+      document.getElementById('saldocuscatlan').innerText = `Q${totals['Cuscatlán'].toFixed(2)}`;
+      document.getElementById('saldopromerica').innerText = `Q${totals['Promerica'].toFixed(2)}`;
+      document.getElementById('saldoefectivo').innerText = `Q${totals['Efectivo'].toFixed(2)}`;
     }
 
     function renderPresupuesto() {
@@ -239,6 +294,7 @@
         const tarjeta = m[1] || 'Tarjeta';
         const comercio = m[2] || 'Comercio';
         const monto = parseFloat(m[3]) || 0;
+        const cat = m[4] || '';
 
         container.innerHTML += `
           <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center">
@@ -247,7 +303,7 @@
                 <span class="font-bold text-slate-200 text-sm">${comercio}</span>
                 <span class="text-[10px] bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-md">${tarjeta}</span>
               </div>
-              <p class="text-[11px] text-slate-400">${fecha}</p>
+              <p class="text-[11px] text-slate-400">${fecha} ${cat ? '• ' + cat : ''}</p>
             </div>
             <span class="font-bold text-sm text-red-400">-Q${monto.toFixed(2)}</span>
           </div>
@@ -264,7 +320,7 @@
       const payload = {
         tipo: document.getElementById('tipo').value,
         tarjeta: document.getElementById('cuenta').value,
-        categoria: document.getElementById('categoria').value,
+        categoria: document.getElementById('categoriaSelect').value,
         comercio: document.getElementById('descripcion').value,
         monto: document.getElementById('monto').value
       };
