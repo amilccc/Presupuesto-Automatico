@@ -17,7 +17,7 @@
         <h1 class="text-xl font-bold tracking-tight text-white">Mi Presupuesto</h1>
         <p class="text-xs text-slate-400" id="lblQuincenaInfo">Cargando fecha...</p>
       </div>
-      <button onclick="cargarDatos()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-lg active:scale-95">
+      <button onclick="cargarDatos()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-3 rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center">
         <i class="fa-solid fa-rotate text-sm" id="iconReload"></i>
       </button>
     </header>
@@ -26,7 +26,7 @@
     <section class="grid grid-cols-2 gap-3">
       <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mes</label>
-        <select id="selectMes" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700">
+        <select id="selectMes" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700 focus:border-indigo-500">
           <option value="1">Enero</option>
           <option value="2">Febrero</option>
           <option value="3">Marzo</option>
@@ -43,14 +43,14 @@
       </div>
       <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800">
         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Quincena</label>
-        <select id="selectQuincena" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700">
+        <select id="selectQuincena" onchange="cambiarFiltro()" class="w-full bg-slate-800 text-white text-sm rounded-xl p-2 outline-none border border-slate-700 focus:border-indigo-500">
           <option value="1">1ra Quincena (1-15)</option>
           <option value="2">2da Quincena (16-Fin)</option>
         </select>
       </div>
     </section>
 
-    <!-- TARJETAS DE TOTALES POR TARJETA -->
+    <!-- TARJETAS DE TOTALES POR TARJETA / MEDIO -->
     <section>
       <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-1">Gastos por Tarjeta / Medio</h2>
       <div id="contenedorTarjetas" class="grid grid-cols-2 gap-3">
@@ -78,17 +78,17 @@
         
         <div>
           <label class="block text-xs text-slate-400 mb-1">Monto (Q)</label>
-          <input type="number" step="0.01" id="inputMonto" required placeholder="0.00" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-lg font-bold">
+          <input type="number" step="0.01" id="inputMonto" required placeholder="0.00" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-lg font-bold focus:border-indigo-500">
         </div>
 
         <div>
           <label class="block text-xs text-slate-400 mb-1">Comercio / Descripción</label>
-          <input type="text" id="inputComercio" required placeholder="Ej. Supermercado, Gasolina..." class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm">
+          <input type="text" id="inputComercio" required placeholder="Ej. Supermercado, Gasolina..." class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500">
         </div>
 
         <div>
           <label class="block text-xs text-slate-400 mb-1">Tarjeta / Método de Pago</label>
-          <select id="selectTarjetaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm">
+          <select id="selectTarjetaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500">
             <option value="Efectivo">Efectivo</option>
             <option value="BAC">BAC</option>
             <option value="Cuscatlan">Cuscatlan</option>
@@ -100,7 +100,7 @@
 
         <div>
           <label class="block text-xs text-slate-400 mb-1">Categoría de Presupuesto</label>
-          <select id="selectCategoriaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm">
+          <select id="selectCategoriaForm" class="w-full bg-slate-800 text-white p-3 rounded-xl outline-none border border-slate-700 text-sm focus:border-indigo-500">
             <!-- Cargado dinámicamente desde el Sheet -->
           </select>
         </div>
@@ -140,7 +140,7 @@
       cargarDatos();
     });
 
-    // FUNCIÓN PARSER DE FECHAS ROBUSTO
+    // PARSER DE FECHA CAPAZ DE LEER DIVERSOS FORMATOS SCRIPT Y TEXTO
     function parsearFecha(valFecha) {
       if (!valFecha) return null;
       if (valFecha instanceof Date) return valFecha;
