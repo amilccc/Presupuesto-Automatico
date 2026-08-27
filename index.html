@@ -237,13 +237,21 @@
 
         if (mesMov !== mesActual) return;
 
-        const tarjeta = (m[1] || '').toString().toLowerCase();
+        // Normalizar texto eliminando tildes y pasando a minúsculas
+        const tarjeta = (m[1] || '').toString().toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          
         const monto = parseFloat(m[3]) || 0;
 
-        if (tarjeta.includes('bac')) totals['BAC'] += monto;
-        else if (tarjeta.includes('cuscatlan')) totals['Cuscatlan'] += monto;
-        else if (tarjeta.includes('promerica')) totals['Promerica'] += monto;
-        else if (tarjeta.includes('efectivo')) totals['Efectivo'] += monto;
+        if (tarjeta.includes('bac')) {
+          totals['BAC'] += monto;
+        } else if (tarjeta.includes('cuscatlan')) {
+          totals['Cuscatlan'] += monto;
+        } else if (tarjeta.includes('promerica')) {
+          totals['Promerica'] += monto;
+        } else if (tarjeta.includes('efectivo')) {
+          totals['Efectivo'] += monto;
+        }
       });
 
       document.getElementById('saldobac').innerText = `Q${totals['BAC'].toFixed(2)}`;
