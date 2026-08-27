@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <!-- Navegación de Pestañas (Diseño original adaptado para 3 opciones) -->
+    <!-- Navegación de Pestañas -->
     <div class="grid grid-cols-3 gap-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
       <button id="tabPresupuesto" onclick="cambiarPestana('presupuesto')" class="py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition">📊 Presupuesto</button>
       <button id="tabTarjetas" onclick="cambiarPestana('tarjetas')" class="py-2 text-xs font-bold rounded-xl text-slate-400 transition">💳 Gastos</button>
@@ -217,6 +217,39 @@
       }
     }
 
+    // Función segura para extraer mes y día de cualquier formato de fecha de Google Sheets
+    function parsearFecha(fechaStr) {
+      if (!fechaStr) return null;
+      let d;
+      const str = fechaStr.toString().trim();
+      
+      if (str.includes('T')) {
+        d = new Date(str);
+      } else if (str.includes('/')) {
+        const partes = str.split('/');
+        if (partes.length === 3) {
+          // Asume formato M/D/YY o M/D/YYYY
+          let mes = parseInt(partes[0]);
+          let dia = parseInt(partes[1]);
+          let anio = parseInt(partes[2]);
+          if (anio < 100) anio += 2000;
+          d = new Date(anio, mes - 1, dia);
+        }
+      }
+      
+      if (!d || isNaN(d)) {
+        d = new Date(str);
+      }
+
+      if (isNaN(d)) return null;
+      return {
+        mes: d.getMonth() + 1,
+        dia: d.getDate(),
+        anio: d.getFullYear(),
+        objetoFecha: d
+      };
+    }
+
     function cambiarPestana(pestana) {
       pestanaActiva = pestana;
       const tabP = document.getElementById('tabPresupuesto');
@@ -227,7 +260,6 @@
       const vistaC = document.getElementById('vistaCortes');
       const panelFiltros = document.getElementById('panelFiltrosMes');
 
-      // Resetear clases de pestañas al diseño original inactivo
       [tabP, tabT, tabC].forEach(t => t.className = "py-2 text-xs font-bold rounded-xl text-slate-400 transition");
       [vistaP, vistaT, vistaC].forEach(v => v.classList.add('hidden'));
       panelFiltros.classList.remove('hidden');
@@ -241,7 +273,7 @@
       } else if (pestana === 'cortes') {
         tabC.className = "py-2 text-xs font-bold rounded-xl bg-emerald-600 text-white shadow transition";
         vistaC.classList.remove('hidden');
-        panelFiltros.classList.add('hidden'); // Ocultar filtros de mes/quincena ya que los cortes usan su propio ciclo
+        panelFiltros.classList.add('hidden');
         renderCortes();
       }
     }
@@ -267,23 +299,11 @@
       let totals = { BAC: 0, Cuscatlan: 0, Promerica: 0, Efectivo: 0 };
 
       datosMovimientos.forEach(m => {
-        const fechaStr = m[0];
-        if (!fechaStr) return;
-        
-        const partesFecha = fechaStr.toString().split('T')[0].split('/');
-        let mesMov = 0;
-        if (partesFecha.length === 3) {
-          mesMov = parseInt(partesFecha[0]);
-        } else {
-          const d = new Date(fechaStr);
-          if (!isNaN(d)) mesMov = d.getMonth() + 1;
-        }
-
-        if (mesMov !== mesActual) return;
+        const fInfo = parsearFecha(m[0]);
+        if (!fInfo || fInfo.mes !== mesActual) return;
 
         const tarjeta = (m[1] || '').toString().toLowerCase()
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          
         const monto = parseFloat(m[3]) || 0;
 
         if (tarjeta.includes('bac')) {
@@ -315,25 +335,10 @@
       let gastosPorCategoria = {};
 
       datosMovimientos.forEach(m => {
-        const fechaStr = m[0];
-        if (!fechaStr) return;
+        const fInfo = parsearFecha(m[0]);
+        if (!fInfo || fInfo.mes !== mesActual) return;
 
-        const partesFecha = fechaStr.toString().split('T')[0].split('/');
-        let mesMov = 0, diaMov = 1;
-        if (partesFecha.length === 3) {
-          mesMov = parseInt(partesFecha[0]);
-          diaMov = parseInt(partesFecha[1]);
-        } else {
-          const d = new Date(fechaStr);
-          if (!isNaN(d)) {
-            mesMov = d.getMonth() + 1;
-            diaMov = d.getDate();
-          }
-        }
-
-        if (mesMov !== mesActual) return;
-
-        const quincenaMov = diaMov <= 15 ? 1 : 2;
+        const quincenaMov = fInfo.dia <= 15 ? 1 : 2;
         if (quincenaMov !== quincenaActual) return;
 
         const cat = (m[4] || 'General').toString().trim().toLowerCase();
@@ -384,20 +389,8 @@
       container.innerHTML = '';
 
       const movimientosValidos = datosMovimientos.filter(m => {
-        const fechaStr = m[0];
-        if (!fechaStr) return false;
-
-        const partesFecha = fechaStr.toString().split('T')[0].split('/');
-        let mesMov = 0;
-        if (partesFecha.length === 3) {
-          mesMov = parseInt(partesFecha[0]);
-        } else {
-          const d = new Date(fechaStr);
-          if (!isNaN(d)) mesMov = d.getMonth() + 1;
-        }
-
-        if (mesMov !== mesActual) return false;
-
+        const fInfo = parsearFecha(m[0]);
+        if (!fInfo || fInfo.mes !== mesActual) return false;
         const monto = parseFloat(m[3]);
         return !isNaN(monto) && monto > 0;
       });
@@ -408,7 +401,8 @@
       }
 
       movimientosValidos.slice().reverse().forEach(m => {
-        const fecha = m[0] ? m[0].toString().split('T')[0] : 'N/A';
+        const fInfo = parsearFecha(m[0]);
+        const fecha = fInfo ? fInfo.objetoFecha.toISOString().split('T')[0] : 'N/A';
         const tarjeta = m[1] || 'Tarjeta';
         const comercio = m[2] || 'Comercio';
         const monto = parseFloat(m[3]) || 0;
@@ -469,24 +463,17 @@
       let htmlMovimientos = '';
 
       datosMovimientos.forEach(m => {
-        const fechaStr = m[0];
         const tarjetaMov = (m[1] || '').toString();
         const comercio = m[2] || 'Comercio';
         const monto = parseFloat(m[3]) || 0;
         const cat = m[4] || '';
 
-        if (!fechaStr) return;
-
         if (tarjetaMov.toLowerCase().includes(tarjetaCorteActual.toLowerCase())) {
-          let fechaMov;
-          const partes = fechaStr.toString().split('T')[0].split('/');
-          if (partes.length === 3) {
-            fechaMov = new Date(partes[2], partes[0] - 1, partes[1]);
-          } else {
-            fechaMov = new Date(fechaStr);
-          }
+          const fInfo = parsearFecha(m[0]);
+          if (!fInfo) return;
+          const fechaMov = fInfo.objetoFecha;
 
-          if (!isNaN(fechaMov) && fechaMov >= fechaInicio && fechaMov <= fechaFin) {
+          if (fechaMov >= fechaInicio && fechaMov <= fechaFin) {
             totalCorte += monto;
             const fechaFormateada = fechaMov.toISOString().split('T')[0];
             htmlMovimientos += `
