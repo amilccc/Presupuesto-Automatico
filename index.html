@@ -217,6 +217,18 @@
       }
     }
 
+    // Detector mapeado a tus nombres de Apple Pay (Platinum Cuscatlan, Premia Platinum, Visa Millas Plus, Visa Signature)
+    function detectarTarjeta(texto) {
+      if (!texto) return 'Otro';
+      const t = texto.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      
+      if (t.includes('cuscatlan')) return 'Cuscatlan';
+      if (t.includes('premia') || t.includes('promerica')) return 'Promerica';
+      if (t.includes('bac') || t.includes('millas plus') || t.includes('signature')) return 'BAC';
+      if (t.includes('efectivo')) return 'Efectivo';
+      return 'Otro';
+    }
+
     // Función segura para extraer mes y día de cualquier formato de fecha de Google Sheets
     function parsearFecha(fechaStr) {
       if (!fechaStr) return null;
@@ -228,7 +240,6 @@
       } else if (str.includes('/')) {
         const partes = str.split('/');
         if (partes.length === 3) {
-          // Asume formato M/D/YY o M/D/YYYY
           let mes = parseInt(partes[0]);
           let dia = parseInt(partes[1]);
           let anio = parseInt(partes[2]);
@@ -302,18 +313,11 @@
         const fInfo = parsearFecha(m[0]);
         if (!fInfo || fInfo.mes !== mesActual) return;
 
-        const tarjeta = (m[1] || '').toString().toLowerCase()
-          .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const tarjeta = detectarTarjeta(m[1]);
         const monto = parseFloat(m[3]) || 0;
 
-        if (tarjeta.includes('bac')) {
-          totals['BAC'] += monto;
-        } else if (tarjeta.includes('cuscatlan')) {
-          totals['Cuscatlan'] += monto;
-        } else if (tarjeta.includes('promerica')) {
-          totals['Promerica'] += monto;
-        } else if (tarjeta.includes('efectivo')) {
-          totals['Efectivo'] += monto;
+        if (totals.hasOwnProperty(tarjeta)) {
+          totals[tarjeta] += monto;
         }
       });
 
@@ -463,12 +467,13 @@
       let htmlMovimientos = '';
 
       datosMovimientos.forEach(m => {
-        const tarjetaMov = (m[1] || '').toString();
+        const tarjetaMovTexto = m[1] || '';
+        const tarjetaDetectada = detectarTarjeta(tarjetaMovTexto);
         const comercio = m[2] || 'Comercio';
         const monto = parseFloat(m[3]) || 0;
         const cat = m[4] || '';
 
-        if (tarjetaMov.toLowerCase().includes(tarjetaCorteActual.toLowerCase())) {
+        if (tarjetaDetectada === tarjetaCorteActual) {
           const fInfo = parsearFecha(m[0]);
           if (!fInfo) return;
           const fechaMov = fInfo.objetoFecha;
@@ -481,7 +486,7 @@
                 <div class="space-y-0.5">
                   <div class="flex items-center gap-2">
                     <span class="font-bold text-slate-200 text-sm">${comercio}</span>
-                    <span class="text-[10px] bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-md">${tarjetaMov}</span>
+                    <span class="text-[10px] bg-slate-800 border border-slate-700 text-emerald-400 px-2 py-0.5 rounded-md">${tarjetaMovTexto}</span>
                   </div>
                   <p class="text-[11px] text-slate-400">${fechaFormateada} ${cat ? '• ' + cat : ''}</p>
                 </div>
