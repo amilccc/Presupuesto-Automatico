@@ -140,6 +140,29 @@
       cargarDatos();
     });
 
+    // FUNCIÓN PARSER DE FECHAS ROBUSTO
+    function parsearFecha(valFecha) {
+      if (!valFecha) return null;
+      if (valFecha instanceof Date) return valFecha;
+
+      const str = valFecha.toString().trim();
+      
+      if (str.includes('/') || str.includes('-')) {
+        const partes = str.split(/[/-]/);
+        if (partes.length >= 3) {
+          // Formato YYYY-MM-DD
+          if (partes[0].length === 4) {
+            return new Date(parseInt(partes[0]), parseInt(partes[1]) - 1, parseInt(partes[2]));
+          }
+          // Formato DD/MM/YYYY
+          return new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+        }
+      }
+
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
     function actualizarLabelFecha() {
       const mesesNom = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
       document.getElementById('lblQuincenaInfo').innerText = `${quincenaActual === 1 ? '1ra' : '2da'} Quincena - ${mesesNom[mesActual - 1]}`;
@@ -201,7 +224,7 @@
       const totales = {};
 
       datosMovimientos.forEach(m => {
-        const fecha = m[0] ? new Date(m[0]) : null;
+        const fecha = parsearFecha(m[0]);
         const tarjeta = (m[1] || 'Otros').toString().trim();
         const monto = parseFloat(m[3]) || 0;
 
@@ -250,7 +273,7 @@
 
         let gastadoCalculado = 0;
         datosMovimientos.forEach(m => {
-          const fecha = m[0] ? new Date(m[0]) : null;
+          const fecha = parsearFecha(m[0]);
           const catMov = (m[4] || '').toString().trim().toLowerCase();
           const catPres = categoria.toString().trim().toLowerCase();
           const monto = parseFloat(m[3]) || 0;
@@ -301,7 +324,7 @@
       container.innerHTML = '';
 
       const filtrados = datosMovimientos.filter(m => {
-        const fecha = m[0] ? new Date(m[0]) : null;
+        const fecha = parsearFecha(m[0]);
         if (!fecha) return false;
         const mMes = fecha.getMonth() + 1;
         const mDia = fecha.getDate();
@@ -315,7 +338,8 @@
       }
 
       filtrados.forEach(m => {
-        const fecha = new Date(m[0]).toLocaleDateString('es-GT', { day: '2-digit', month: '2-digit' });
+        const fechaObj = parsearFecha(m[0]);
+        const fechaStr = fechaObj ? `${String(fechaObj.getDate()).padStart(2, '0')}/${String(fechaObj.getMonth() + 1).padStart(2, '0')}` : 'S/F';
         const tarj = m[1] || 'Efectivo';
         const comercio = m[2] || 'Gasto';
         const monto = parseFloat(m[3]) || 0;
@@ -325,7 +349,7 @@
           <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 flex justify-between items-center space-x-3">
             <div class="min-w-0 flex-1">
               <p class="text-xs font-bold text-slate-200 truncate">${comercio}</p>
-              <p class="text-[10px] text-slate-400 truncate">${fecha} • ${tarj} • <span class="text-indigo-400">${cat}</span></p>
+              <p class="text-[10px] text-slate-400 truncate">${fechaStr} • ${tarj} • <span class="text-indigo-400">${cat}</span></p>
             </div>
             <span class="text-sm font-extrabold text-slate-100 shrink-0">Q${monto.toFixed(2)}</span>
           </div>
